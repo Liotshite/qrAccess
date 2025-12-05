@@ -6,11 +6,11 @@ const router = express.Router();
 
 
 
-// show projects
-router.get('/projects',/*authenticateToken,*/ async (req,res) =>{
+// show events
+router.get('/events',/*authenticateToken,*/ async (req,res) =>{
     try {
-        // const projects = await getProjects();
-        res.render('projects/viewprojects');
+        // const events = await getEvents();
+        res.render('events/viewEvents');
 
     } catch (error) {
         console.error(err);
@@ -21,10 +21,10 @@ router.get('/projects',/*authenticateToken,*/ async (req,res) =>{
 
 
 
-// show create project
+// show create event
 router.get('/add',/*authenticateToken,*/ async (req,res) => {
   try {
-    res.render('projects/createProject');
+    res.render('events/createEvent');
   } catch (err) {
     console.error(err);
   }

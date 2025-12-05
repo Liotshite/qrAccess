@@ -25,12 +25,12 @@ const upload = multer({ storage });
 
 // Route pour afficher les contrats (projet ou dossier existant par rapport a un evenement)
 
-router.get('/project',authenticateToken, async (req, res) => {
+router.get('/event',authenticateToken, async (req, res) => {
   try {
     const search = req.query.search;
     const userId = req.user.id;
     const products = await getMyProducts(userId);
-    res.render('projects', { products: products });
+    res.render('events', { products: products });
   } catch (err) {
     console.error(err);
     res.status(500).send('Erreur lors du chargement des données.');
