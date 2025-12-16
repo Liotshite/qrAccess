@@ -1,13 +1,13 @@
 // const { getCategories } = require("../controllers/DBController");
 const express = require('express');
 const router = express.Router();
-//const authenticateToken = require('../middleware/authMiddleware');
+const authenticateToken = require('../middleware/authMiddleware');
 
 
 
 
 // show events
-router.get('/events',/*authenticateToken,*/ async (req,res) =>{
+router.get('/events',authenticateToken, async (req,res) =>{
     try {
         // const events = await getEvents();
         res.render('events/viewEvents');
@@ -22,7 +22,7 @@ router.get('/events',/*authenticateToken,*/ async (req,res) =>{
 
 
 // show create event
-router.get('/add',/*authenticateToken,*/ async (req,res) => {
+router.get('/add',authenticateToken, async (req,res) => {
   try {
     res.render('events/createEvent');
   } catch (err) {
@@ -32,7 +32,7 @@ router.get('/add',/*authenticateToken,*/ async (req,res) => {
 
 
 
-router.post('/addP'/*,authenticateToken*/, async (req, res) => {
+router.post('/addP',authenticateToken, async (req, res) => {
   try {
     const { namecat, description } = req.body;
     const userId = req.user.id;
