@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -14,27 +13,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
+  id       Int    @id @default(autoincrement())
+  name     String @unique
   password String
 
-  // Relations
-  events   Event[]
+  events Event[]
+
+  @@map("users")
 }
 
 model Event {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  name       String
-  customer   String
+  id          Int    @id @default(autoincrement())
+  name        String
+  customer    String
   description String
+  userId      Int
 
-  // Relations
-  user       User     @relation(fields: [userId], references: [id])
-  qrs        Qr[]
+  user User @relation(fields: [userId], references: [id])
+  qrs  Qr[]
+
+  @@map("events")
 }
 
 model Qr {
@@ -43,8 +42,7 @@ model Qr {
   information  String
   creationdate DateTime @default(now())
 
-  // Relation avec Event
-  event        Event    @relation(fields: [projectid], references: [id])
+  event Event @relation(fields: [projectid], references: [id])
+
+  @@map("qrs")
 }
-
-

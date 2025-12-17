@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Connexion - Plateforme Producteurs</title>
+  <title>Connexion - Plateforme</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -78,7 +78,7 @@
       color: var(--text-color);
     }
     
-    input[type="email"],
+    input[type="username"],
     input[type="password"],
     input[type="text"] {
       width: 100%;
@@ -203,7 +203,8 @@
 
   <div class="login-container">
     <div class="logo">
-      <!-- Vous pouvez ajouter un logo ici -->
+      <!-- logo -->
+      <img src="../../statics/logo/logo SI.jpg" alt="logo">
       <h2>Connexion</h2>
     </div>
 
@@ -232,6 +233,7 @@
       <button type="submit" class="btn">Se connecter</button>
     </form>
 
+    
     <div class="links-container">
       <a href="/user/inscription">Créer un compte</a>
       <a href="/user/resetPass">Mot de passe oublié ?</a>
@@ -239,6 +241,8 @@
   </div>
 
   <script>
+    // visibilite du mot de passe 
+    
     function toggleVisibility() {
       const input = document.getElementById('password');
       input.type = input.type === 'password' ? 'text' : 'password';
@@ -257,8 +261,5 @@
       });
     });
   </script>
-  
-  <!-- Optionnel : ajouter Font Awesome pour les icônes -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </body>
 </html>
