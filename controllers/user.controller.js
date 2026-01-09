@@ -2,8 +2,9 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userService = require("../services/user.service");
+const { name } = require("ejs");
 
-exports.renderLogin = (req, res) => {
+exports.renderLogin = (req,res) => {
   res.render("user/login");
 };
 
@@ -39,3 +40,30 @@ exports.login = async (req, res) => {
     res.status(500).send("Erreur lors de la connexion.");
   }
 };
+
+
+
+exports.renderSignIn = (req,res) => {
+  res.render("user/signin");
+}
+
+
+
+exports.signin = async (req,res) => {
+  try {
+    const { username, password } = req.body;
+    var user = await userService.findByName(username);
+
+    if (!user) {
+      const hashed = await bcrypt.hash(password, 10);
+      user = {name : username, password : hashed}
+      await userService.createUser(user);
+      res.redirect('/user/login?message=Inscription réussie');
+    }else{
+      res.redirect('/user/signin?message=ce nom est déjà associé à un compte');
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Une erreur s\'est produite.');
+  }
+}
