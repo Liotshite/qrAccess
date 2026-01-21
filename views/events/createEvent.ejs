@@ -260,13 +260,24 @@
 <div class="container">
     <div class="form-container">
         <h2>Event creation</h2>
-        <form action="/event/addP" method="post" enctype="multipart/form-data">
+        <form action="/event/createEvent" method="post" enctype="multipart/form-data">
             
             <div class="form-group">
-                <label for="name">Event name </label>
-                <input type="text" id="name" name="name" required placeholder="">
+                <label for="Eventname">Event name </label>
+                <input type="text" id="Eventname" name="Eventname" required placeholder="">
+            </div>
+
+            <div class="form-group">
+                <label for="Customer">Customer </label>
+                <input type="text" id="Customer" name="Customer" required placeholder="">
             </div>
             
+            <div class="form-group">
+                <label for="dateEv"> Event date </label>
+                <input type="datetime" name="dateEv" id="dateEv">
+            </div>
+
+
             <div class="form-group">
                 <label for="description">Description</label>
                 <textarea id="description" name="description" required placeholder="Describ event"></textarea>

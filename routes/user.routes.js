@@ -9,17 +9,27 @@ const userController = require("../controllers/user.controller");
 
 // Page login
 router.get("/login", userController.renderLogin);
-
 // Login submit
 router.post("/login", userController.login);
 
 
+
+
+
 // Page signIn
 router.get("/signin", userController.renderSignIn);
-
-
 // SignIn submit
 router.post('/signin', userController.signin);
+
+
+
+
+
+
+
+
+
+
 
 
 // Route pour voir le profil

@@ -145,12 +145,12 @@
 
             </div>
            <div>
-                <a class="btn btn-success" href="/event/add" role="button">New event</a>
+                <a class="btn btn-success" href="/event/createEvent" role="button">New event</a>
             </div>
         </div>
-        <form action="/events/mytransactions" method="get">
+        <form action="/events/research" method="get">
             <div class="search-bar">
-               <input type="text" name="search" id="searchInput" placeholder="Rechercher date, montant, id user">
+               <input type="text" name="search" id="searchInput" placeholder="Rechercher ">
 
             </div>
         </form>
@@ -174,7 +174,7 @@
                         <td ><%= %></td>
                         <td ><%= %></td>
                         <td >
-                            <a href="/produit/voirT/<%= %>" class="btn btn-dark">Show</a></td>
+                            <a href="/event/viewEvent/<%= %>" class="btn btn-dark">Show</a></td>
                     </tr>
                     <% %>
                 

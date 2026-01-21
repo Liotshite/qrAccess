@@ -2,21 +2,25 @@
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
+const eventController = require('../controllers/event.controller')
 
 
 
 
-// show events
-router.get('/events',authenticateToken, async (req,res) =>{
-    try {
-        // const events = await getEvents();
-        res.render('events/viewEvents');
+// Page event
+router.get("/events", eventController.renderEvents);
 
-    } catch (error) {
-        console.error(err);
-        res.status(500).send('Erreur lors du chargement des données.');
-    }
-});
+
+
+// Page view Event
+router.get("/viewEvent", eventController.renderViewEvent);
+
+
+
+// Page create event 
+router.get("/createEvent", eventController.renderCreateEvent);
+//Create event 
+router.post("/createEvent", eventController.createEvent);
 
 
 

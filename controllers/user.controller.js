@@ -33,7 +33,7 @@ exports.login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000
     });
 
-    res.redirect("/events?message=Connexion réussie");
+    res.redirect("/event/events?message=Connexion réussie");
 
   } catch (error) {
     console.error(error);
@@ -67,3 +67,5 @@ exports.signin = async (req,res) => {
     res.status(500).send('Une erreur s\'est produite.');
   }
 }
+
+
