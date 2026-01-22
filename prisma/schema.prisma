@@ -29,17 +29,19 @@ model Event {
   customer    String
   description String
   userId      Int
+  categoryId    Int
   dateevent   DateTime
   creationdate DateTime
 
   user User @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
   qrs  Qr[]
 
   @@map("events")
 }
 
 model Qr {
-  id           Int      @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   eventid    Int
   information  String
   creationdate DateTime @default(now())
@@ -47,4 +49,12 @@ model Qr {
   event Event @relation(fields: [eventid], references: [id])
 
   @@map("qrs")
+}
+
+model Category {
+  id       Int    @id @default(autoincrement())
+  catname     String @unique
+
+  events Event[]
+  @@map("categories")
 }

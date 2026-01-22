@@ -260,7 +260,7 @@
 <div class="container">
     <div class="form-container">
         <h2>Event creation</h2>
-        <form action="/event/createEvent" method="post" enctype="multipart/form-data">
+        <form action="/event/createEvent" method="post" >
             
             <div class="form-group">
                 <label for="Eventname">Event name </label>
@@ -268,19 +268,29 @@
             </div>
 
             <div class="form-group">
-                <label for="Customer">Customer </label>
+                <label for="Customer">Customer name</label>
                 <input type="text" id="Customer" name="Customer" required placeholder="">
             </div>
             
             <div class="form-group">
                 <label for="dateEv"> Event date </label>
-                <input type="datetime" name="dateEv" id="dateEv">
+                <input type="datetime-local" name="dateEv" id="dateEv">
             </div>
 
 
             <div class="form-group">
                 <label for="description">Description</label>
                 <textarea id="description" name="description" required placeholder="Describ event"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="category">category</label>
+                <select id="category" name="category" required>
+                    <option value="">-- Sélect a category --</option>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category.id %>"><%= category.catname %></option>
+                    <% }) %>
+                </select>
             </div>
             
             <div class="buttons-container">

@@ -141,14 +141,14 @@
     <div style="padding: 20px">
         <div class="header">
             <div>
-                <h1>Total transactions : <span><%=  %></span></h1>
+                <h1>Total events : <span><%= nbr %></span></h1>
 
             </div>
            <div>
                 <a class="btn btn-success" href="/event/createEvent" role="button">New event</a>
             </div>
         </div>
-        <form action="/events/research" method="get">
+        <form action="/event/research" method="get">
             <div class="search-bar">
                <input type="text" name="search" id="searchInput" placeholder="Rechercher ">
 

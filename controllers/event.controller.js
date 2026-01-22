@@ -1,33 +1,37 @@
 const eventService = require('../services/event.service');
+const categoryService = require('../services/category.service');
 
-
-exports.renderEvents = (req,res) => {
-  res.render("events/listEvents");
+exports.renderEvents = async (req,res) => {
+  const events = await eventService.findAll();
+  const nbr = await eventService.countEvents();
+  res.render("event/listEvents",{events,nbr});
 }
 
 
-exports.renderViewEvent = (res,req) => {
-
+exports.renderViewEvent = async (res,req) => {
+  res.render("event/viewEvent");
  }
 
 
-exports.renderCreateEvent = (req,res) => {
-  res.render("events/createEvent");
+exports.renderCreateEvent = async (req,res) => {
+  const categories = await categoryService.findAll(); 
+  res.render("event/createEvent",{categories});
 }
 
 exports.createEvent = async (req,res) => {
   try {
-    const {Eventname,Customer,description,dateEv} = req.body;
+    const {Eventname,Customer,category,description,dateEv} = req.body;
     var event = await eventService.findByName(Eventname);
     
     if (!event) {
       const Cdate = new Date();
       const userId = req.user.id;
-      event = { Eventname: Eventname, 
+      event = { eventname: Eventname, 
                 customer: Customer,
                 description: description,
                 userId:      userId,
-                dateevent:   dateEv,
+                categoryId : category,
+                dateevent: new Date(dateEv),
                 creationdate : Cdate
               }
       await eventService.createEvent(event);
