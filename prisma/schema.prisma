@@ -19,7 +19,8 @@ model User {
   password String
 
   events Event[]
-
+  categories Category[]
+  
   @@map("users")
 }
 
@@ -54,7 +55,9 @@ model Qr {
 model Category {
   id       Int    @id @default(autoincrement())
   catname     String @unique
+  userId      Int
 
+  usercat User @relation(fields: [userId], references: [id])
   events Event[]
   @@map("categories")
 }
