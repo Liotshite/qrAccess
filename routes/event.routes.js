@@ -10,7 +10,6 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.get("/events", eventController.renderEvents);
 
 
-
 // Page view Event
 router.get("/viewEvent", eventController.renderViewEvent);
 

@@ -24,12 +24,14 @@ app.use(express.static(path.join(__dirname, "statics")));
 
 
 // ===== Routes =====
-const authRoutes = require("./routes/user.routes");   
-const eventRoutes = require("./routes/event.routes");
+const authRoads = require("./routes/user.routes");   
+const eventRoads = require("./routes/event.routes");
+const catRoads = require("./routes/category.routes");
 
 
-app.use("/user", authRoutes);
-app.use("/event", eventRoutes);
+app.use("/user", authRoads);
+app.use("/event", eventRoads);
+app.use("/cat", catRoads);
 
 
 

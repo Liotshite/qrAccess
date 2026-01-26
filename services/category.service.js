@@ -19,5 +19,11 @@ exports.createCat = async (data) =>{
 
 //count event in bdd
 exports.countCats = async () => {
-  return prisma.category.count();
+  return await prisma.category.count();
 };
+
+
+// delete cat
+exports.deleteCat = async (id) => {
+  await prisma.category.delete(id);
+}

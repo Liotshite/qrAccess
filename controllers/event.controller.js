@@ -20,9 +20,9 @@ exports.renderCreateEvent = async (req,res) => {
 
 exports.createEvent = async (req,res) => {
   try {
-    const {Eventname,Customer,category,description,dateEv} = req.body;
+    var {Eventname,Customer,category,description,dateEv} = req.body;
     var event = await eventService.findByName(Eventname);
-    
+    var cat = parseInt(category);
     if (!event) {
       const Cdate = new Date();
       const userId = req.user.id;
@@ -30,7 +30,7 @@ exports.createEvent = async (req,res) => {
                 customer: Customer,
                 description: description,
                 userId:      userId,
-                categoryId : category,
+                categoryId : cat,
                 dateevent: new Date(dateEv),
                 creationdate : Cdate
               }

@@ -1,21 +1,20 @@
 const categoryService = require('../services/category.service');
 
+// render list event
 exports.renderCats = async (req,res) => {
   const cats = await categoryService.findAll();
   const nbr = await categoryService.countCats();
-  res.render("event/listEvents",{cats,nbr});
+  res.render("category/listCat",{cats,nbr});
 }
 
 
-exports.renderViewCats = async (res,req) => {
-  res.render("event/viewEvent");
- }
-
-
+ // render creation event
 exports.renderCreateCat = async (req,res) => {
-  res.render("event/createEvent",{categories});
+  res.render("category/createCat");
 }
 
+
+// post in BDD event
 exports.createCat = async (req,res) => {
   try {
     const {catname} = req.body;
@@ -27,12 +26,18 @@ exports.createCat = async (req,res) => {
                 userId: userId,
               }
       await categoryService.createCat(cat);
-      res.redirect('/event/events?Category created');
+      res.redirect('/cat/cats?Category created');
     }else{
-      res.redirect('/event/events?Category already exist');
+      res.redirect('/cat/cats?Category already exist');
     }
   } catch (error) {
     console.error(error);
     res.status(500).send('Une erreur s\'est produit.');
   }
+}
+
+
+// delete event
+exports.deletecat = async (res,req) => {
+
 }
