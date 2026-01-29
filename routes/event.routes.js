@@ -21,6 +21,8 @@ router.get("/createEvent", eventController.renderCreateEvent);
 router.post("/createEvent",authMiddleware, eventController.createEvent);
 
 
+//delete event
+router.post("deleteEvent",eventController);
 
 
 

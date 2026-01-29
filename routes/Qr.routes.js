@@ -8,61 +8,58 @@ const multer = require("multer");
 const QRCode = require("qrcode");
 const path = require("path");
 const fs = require("fs");
-/*
-const { getTransactionsByUsers,updateProductOwner,saveTransaction,getProductHistory,updateProduct,getUserTransactions,getProductById,timeRegFab, saveSensorData,saveProduct,getProducts, getCategories,getZone, getMyProducts } = require('../controllers/DBController');
+const qrController = require("../controllers/qr.controller");
 
 
 
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
+
+// Page event
+router.get("/qrs",qrController );
+
+
+// Page view Event
+router.get("/viewQr", qrController);
+
+
+
+// Page create event 
+router.get("/createQr", qrController);
+//Create event 
+router.post("/createQr",authMiddleware,qrController);
+
+
+
+//Delete event 
+router.post("/deleteQr",authMiddleware,qrController);
 
 
 
 
-// Route pour afficher les contrats (projet ou dossier existant par rapport a un evenement)
-
-router.get('/event',authenticateToken, async (req, res) => {
-  try {
-    const search = req.query.search;
-    const userId = req.user.id;
-    const products = await getMyProducts(userId);
-    res.render('events', { products: products });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Erreur lors du chargement des données.');
-  }
-});
 
 
 
 
-// Route pour afficher les details d'un produit
-router.get('/view/:uuid',authenticateToken, async (req, res) => {
-  try {
-    const produit = getProductById(req.params.uuid);
-    res.render('voirProduit', { product: produit });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Erreur lors du chargement des données.');
-  }
-});
 
 
 
-// Route pour afficher le formulaire d'ajout produit
-router.get('/ajout',authenticateToken, async (req,res) => {
-  try {
-    const categories = await getCategories(); 
-    const zones = await getZone();
-    res.render('CreationProduit', { categories,zones });
-  } catch (err) {
-    console.error(err);
-  }
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -167,31 +164,8 @@ router.get('/mytransactions',authenticateToken, async (req,res) => {
 
 
 
-// Route pour nouvelle transaction
-router.get('/ajoutransactions/:uuid',authenticateToken, async (req,res) => {
-  try {
-    const produit = await getProductById(req.params.uuid);
-    res.render('user/CreationTransaction',{produit : produit});
-  } catch (err) {
-    console.error(err);
-  }
-});
 
 
 
-router.post('/ajoutT/:uuid',authenticateToken, async (req, res) => {
-  try {
-    const { montant, beneficiaire } = req.body;
-    
-    const produit = await getProductById(req.params.uuid);
-    await saveTransaction(req.user.id,beneficiaire,req.params.uuid,montant);
-    await updateProductOwner(req.params.uuid, beneficiaire);
-    console.log('Transaction enregistrées avec succès');
-    res.redirect('/produit/myprod');
-  } catch (error) {
-    console.error('Erreur lors de l\'enregistrement:', error);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
-  }
-});
 
-module.exports = router;*/
+module.exports = router;

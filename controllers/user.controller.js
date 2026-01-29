@@ -1,8 +1,9 @@
-
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userService = require("../services/user.service");
 const { name } = require("ejs");
+
+
 
 exports.renderLogin = (req,res) => {
   res.render("user/login");
@@ -26,13 +27,11 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
-
     res.cookie("token", token, {
       httpOnly: true,
       secure: false, // true en production (HTTPS)
       maxAge: 24 * 60 * 60 * 1000
     });
-
     res.redirect("/event/events?message=Connexion réussie");
 
   } catch (error) {
@@ -40,6 +39,9 @@ exports.login = async (req, res) => {
     res.status(500).send("Erreur lors de la connexion.");
   }
 };
+
+
+
 
 
 
@@ -53,7 +55,6 @@ exports.signin = async (req,res) => {
   try {
     const { username, password } = req.body;
     var user = await userService.findByName(username);
-
     if (!user) {
       const hashed = await bcrypt.hash(password, 10);
       user = {name : username, password : hashed}
@@ -69,3 +70,33 @@ exports.signin = async (req,res) => {
 }
 
 
+
+
+
+exports.viewprofile = async (req,res) => {
+  try {
+    const user = req.user;
+    res.render('user/profile',{user});
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Erreur lors du chargement de la page.');
+  }
+};
+
+
+
+
+exports.logout = async (req,res) => {
+  if (req.session) {
+    req.session.destroy(err => {
+      if (err) {
+        console.error('Erreur lors de la destruction de la session :', err);
+        return res.status(500).send('Erreur lors de la déconnexion.');
+      }
+      res.clearCookie('connect.sid');
+      res.redirect('/user/login');
+    });
+  } else {
+    res.redirect('/user/login');
+  }
+};
