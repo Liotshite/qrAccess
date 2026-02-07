@@ -10,7 +10,9 @@ exports.findByName = async (eventname) => {
 exports.findAll = async () => {
   return await prisma.event.findMany({
     where: {
-      deletedAt: null
+      deletedAt: {
+        not: null
+      }
     }
   });
 };

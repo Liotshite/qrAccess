@@ -7,13 +7,13 @@ exports.findByName = async (catname) => {
 };
 
 // Find all events
-exports.findAll = async () =>{
+exports.findAll = async () => {
   return await prisma.category.findMany();
 };
 
 // Create event
-exports.createCat = async (data) =>{
-  return await prisma.category.create({ data});
+exports.createCat = async (data) => {
+  return await prisma.category.create({ data });
 };
 
 

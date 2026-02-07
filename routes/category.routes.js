@@ -5,13 +5,13 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 
 // Page list categories
-router.get("/cats", catController.renderCats);
+router.get("/cats", authMiddleware, catController.renderCats);
 
 
 // Page creation
-router.get("/createCat", catController.renderCreateCat);
+router.get("/createCat", authMiddleware, catController.renderCreateCat);
 
-router.post("/createCat",authMiddleware, catController.createCat);
+router.post("/createCat", authMiddleware, catController.createCat);
 
 
 
