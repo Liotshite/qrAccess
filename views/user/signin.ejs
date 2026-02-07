@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <title>Inscription - Plateforme Producteurs</title>
@@ -15,13 +16,13 @@
       --border-color: #ced4da;
       --error-color: #dc3545;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -32,7 +33,7 @@
       color: var(--text-color);
       line-height: 1.6;
     }
-    
+
     .register-container {
       background: white;
       padding: 2.5rem;
@@ -43,11 +44,11 @@
       margin: 2rem;
       transition: transform 0.3s ease;
     }
-    
+
     .register-container:hover {
       transform: translateY(-5px);
     }
-    
+
     h2 {
       text-align: center;
       margin-bottom: 1.8rem;
@@ -55,28 +56,28 @@
       font-weight: 600;
       font-size: 1.8rem;
     }
-    
+
     .logo {
       text-align: center;
       margin-bottom: 1.5rem;
     }
-    
+
     .logo img {
       height: 50px;
     }
-    
+
     .form-group {
       margin-bottom: 1.3rem;
       position: relative;
     }
-    
+
     label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
       color: var(--text-color);
     }
-    
+
     .in {
       width: 100%;
       padding: 0.8rem 1rem;
@@ -86,14 +87,14 @@
       transition: all 0.3s ease;
       background-color: var(--secondary-color);
     }
-    
+
     .in:focus {
       outline: none;
       border-color: var(--primary-color);
       box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
       background-color: white;
     }
-    
+
     .btn {
       background-color: var(--primary-color);
       color: white;
@@ -108,16 +109,16 @@
       margin-top: 0.5rem;
       letter-spacing: 0.5px;
     }
-    
+
     .btn:hover {
       background-color: var(--primary-dark);
       transform: translateY(-2px);
     }
-    
+
     .btn:active {
       transform: translateY(0);
     }
-    
+
     .error-message {
       color: var(--error-color);
       text-align: center;
@@ -127,7 +128,7 @@
       border-radius: 8px;
       border-left: 4px solid var(--error-color);
     }
-    
+
     .toggle-password {
       display: flex;
       align-items: center;
@@ -135,34 +136,34 @@
       cursor: pointer;
       user-select: none;
     }
-    
+
     .toggle-password input {
       margin-right: 0.5rem;
       cursor: pointer;
     }
-    
+
     .login-link {
       text-align: center;
       margin-top: 1.5rem;
       font-size: 0.95rem;
     }
-    
+
     .login-link a {
       color: var(--primary-color);
       text-decoration: none;
       font-weight: 500;
       transition: all 0.2s ease;
     }
-    
+
     .login-link a:hover {
       text-decoration: underline;
       color: var(--primary-dark);
     }
-    
+
     .input-icon {
       position: relative;
     }
-    
+
     .input-icon i {
       position: absolute;
       right: 15px;
@@ -170,19 +171,20 @@
       transform: translateY(-50%);
       color: var(--border-color);
     }
-    
+
     @media (max-width: 480px) {
       .register-container {
         padding: 1.5rem;
         margin: 1rem;
       }
-      
+
       h2 {
         font-size: 1.5rem;
       }
     }
   </style>
 </head>
+
 <body>
 
   <div class="register-container">
@@ -191,41 +193,43 @@
       <h2>Inscription</h2>
     </div>
 
-    <% if (typeof error !== 'undefined') { %>
+    <% if (typeof error !=='undefined' ) { %>
       <div class="error-message">
-        <i class="fas fa-exclamation-circle"></i> <%= error %>
+        <i class="fas fa-exclamation-circle"></i>
+        <%= error %>
       </div>
-    <% } %>
+      <% } %>
 
-    <form action="/user/signin" method="POST">
-      <div class="form-group">
-        <label for="username">User name</label>
-        <input type="text" class="in" name="username" id="username" required placeholder="dkdjdj">
-      </div>
+        <form action="/user/signin" method="POST">
+          <div class="form-group">
+            <label for="name">User name</label>
+            <input type="text" class="in" name="name" id="name" required placeholder="dkdjdj">
+          </div>
 
-      <div class="form-group">
-        <label for="password">Mot de passe</label>
-        <input type="password" class="in" name="password" id="password" required placeholder="••••••••">
-      </div>
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" class="in" name="password" id="password" required placeholder="••••••••">
+          </div>
 
-      <div class="form-group">
-        <label for="confirmPassword">Confirmer le mot de passe</label>
-        <input type="password" class="in" name="confirmPassword" id="confirmPassword" required placeholder="••••••••">
-      </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirmer le mot de passe</label>
+            <input type="password" class="in" name="confirmPassword" id="confirmPassword" required
+              placeholder="••••••••">
+          </div>
 
-      <div class="toggle-password">
-        <input type="checkbox" id="togglePassword" onclick="toggleVisibility()">
-        <label for="togglePassword">Afficher les mots de passe</label>
-      </div>
-      
-      <button type="submit" class="btn">
-        S'inscrire
-      </button>
-    </form>
-    
-    <div class="login-link">
-      Déjà inscrit ? <a href="/user/login">Connectez-vous ici</a>
-    </div>
+          <div class="toggle-password">
+            <input type="checkbox" id="togglePassword" onclick="toggleVisibility()">
+            <label for="togglePassword">Afficher les mots de passe</label>
+          </div>
+
+          <button type="submit" class="btn">
+            S'inscrire
+          </button>
+        </form>
+
+        <div class="login-link">
+          Déjà inscrit ? <a href="/user/login">Connectez-vous ici</a>
+        </div>
   </div>
 
   <script>
@@ -236,22 +240,23 @@
         input.type = input.type === 'password' ? 'text' : 'password';
       });
     }
-    
+
     // Animation pour les champs de formulaire
     document.querySelectorAll('.in').forEach(input => {
-      input.addEventListener('focus', function() {
+      input.addEventListener('focus', function () {
         this.parentNode.querySelector('label').style.color = 'var(--primary-color)';
       });
-      
-      input.addEventListener('blur', function() {
+
+      input.addEventListener('blur', function () {
         if (!this.value) {
           this.parentNode.querySelector('label').style.color = 'var(--text-color)';
         }
       });
     });
   </script>
-  
+
   <!-- Optionnel : ajouter Font Awesome pour les icônes -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </body>
+
 </html>

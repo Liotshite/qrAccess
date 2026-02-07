@@ -33,6 +33,7 @@ model Event {
   categoryId    Int
   dateevent   DateTime
   creationdate DateTime
+  deletedAt DateTime
 
   user User @relation(fields: [userId], references: [id])
   category Category @relation(fields: [categoryId], references: [id])

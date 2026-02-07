@@ -25,9 +25,9 @@ router.post('/signin', userController.signin);
 
 
 // Page profile
-router.get("/profile",authMiddleware,userController.viewprofile);
+router.get("/profile", authMiddleware, userController.viewprofile);
 // Page log out
-router.get("logout",authMiddleware,userController.logout);
+router.get("/logout", authMiddleware, userController.logout);
 
 
 

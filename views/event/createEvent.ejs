@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,13 +19,13 @@
             --success-color: #4caf50;
             --dark-color: #343a40;
         }
-        
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -33,13 +34,13 @@
             padding: 0;
             min-height: 100vh;
         }
-        
+
         .container {
             max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
         }
-        
+
         .form-container {
             background: white;
             padding: 2.5rem;
@@ -47,11 +48,11 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
         }
-        
+
         .form-container:hover {
             transform: translateY(-5px);
         }
-        
+
         h2 {
             text-align: center;
             margin-bottom: 2rem;
@@ -59,25 +60,27 @@
             font-weight: 600;
             font-size: 1.8rem;
         }
-        
+
         form {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
-        
+
         .form-group {
             display: flex;
             flex-direction: column;
         }
-        
+
         label {
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: var(--text-color);
         }
-        
-        input, select, textarea {
+
+        input,
+        select,
+        textarea {
             padding: 0.8rem 1rem;
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -86,26 +89,28 @@
             background-color: var(--secondary-color);
             font-family: 'Poppins', sans-serif;
         }
-        
-        input:focus, select:focus, textarea:focus {
+
+        input:focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
             background-color: white;
         }
-        
+
         textarea {
             min-height: 120px;
             resize: vertical;
         }
-        
+
         .buttons-container {
             display: flex;
             justify-content: space-between;
             gap: 1rem;
             margin-top: 1rem;
         }
-        
+
         .btn {
             padding: 0.8rem 1.5rem;
             border: none;
@@ -118,28 +123,28 @@
             text-decoration: none;
             display: inline-block;
         }
-        
+
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
             flex-grow: 1;
         }
-        
+
         .btn-primary:hover {
             background-color: var(--primary-dark);
             transform: translateY(-2px);
         }
-        
+
         .btn-dark {
             background-color: var(--dark-color);
             color: white;
         }
-        
+
         .btn-dark:hover {
             background-color: #23272b;
             transform: translateY(-2px);
         }
-        
+
         .popup {
             position: fixed;
             top: 20px;
@@ -154,27 +159,34 @@
             font-weight: 500;
             animation: fadeIn 0.3s ease-in-out;
         }
-        
+
         .popup.success {
             background-color: var(--success-color);
         }
-        
+
         .popup.error {
             background-color: var(--error-color);
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; top: 0; }
-            to { opacity: 1; top: 20px; }
+            from {
+                opacity: 0;
+                top: 0;
+            }
+
+            to {
+                opacity: 1;
+                top: 20px;
+            }
         }
-        
+
         .file-input-container {
             position: relative;
             overflow: hidden;
             display: inline-block;
             width: 100%;
         }
-        
+
         .file-input-label {
             border: 1px dashed var(--border-color);
             border-radius: 8px;
@@ -185,25 +197,25 @@
             display: block;
             background-color: var(--secondary-color);
         }
-        
+
         .file-input-label:hover {
             border-color: var(--primary-color);
             background-color: rgba(76, 175, 80, 0.05);
         }
-        
+
         .file-input-label i {
             font-size: 2rem;
             color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
-        
+
         .file-input-label span {
             display: block;
             margin-top: 0.5rem;
             font-size: 0.9rem;
             color: var(--text-color);
         }
-        
+
         #images {
             position: absolute;
             left: 0;
@@ -213,14 +225,14 @@
             height: 100%;
             cursor: pointer;
         }
-        
+
         .file-preview {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-top: 1rem;
         }
-        
+
         .file-preview-item {
             position: relative;
             width: 80px;
@@ -229,136 +241,140 @@
             overflow: hidden;
             border: 1px solid var(--border-color);
         }
-        
+
         .file-preview-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
             }
-            
+
             .form-container {
                 padding: 1.5rem;
             }
-            
+
             h2 {
                 font-size: 1.5rem;
             }
-            
+
             .buttons-container {
                 flex-direction: column;
             }
         }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <div class="form-container">
-        <h2>Event creation</h2>
-        <form action="/event/createEvent" method="post" >
-            
-            <div class="form-group">
-                <label for="Eventname">Event name </label>
-                <input type="text" id="Eventname" name="Eventname" required placeholder="">
-            </div>
+    <div class="container">
+        <div class="form-container">
+            <h2>Event creation</h2>
+            <form action="/event/createEvent" method="post">
 
-            <div class="form-group">
-                <label for="Customer">Customer name</label>
-                <input type="text" id="Customer" name="Customer" required placeholder="">
-            </div>
-            
-            <div class="form-group">
-                <label for="dateEv"> Event date </label>
-                <input type="datetime-local" name="dateEv" id="dateEv">
-            </div>
+                <div class="form-group">
+                    <label for="eventName">Event name </label>
+                    <input type="text" id="eventName" name="eventName" required placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label for="customer">Customer name</label>
+                    <input type="text" id="customer" name="customer" required placeholder="">
+                </div>
+
+                <div class="form-group">
+                    <label for="dateEv"> Event date </label>
+                    <input type="datetime-local" name="dateEv" id="dateEv">
+                </div>
 
 
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" required placeholder="Describ event"></textarea>
-            </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" required placeholder="Describ event"></textarea>
+                </div>
 
-            <div class="form-group">
-                <label for="category">category</label>
-                <select id="category" name="category" required>
-                    <option value="">-- Sélect a category --</option>
-                    <% categories.forEach(category => { %>
-                        <option value="<%= category.id %>"><%= category.catname %></option>
-                    <% }) %>
-                </select>
-            </div>
-            
-            <div class="buttons-container">
-                <a href="/event/events" class="btn btn-dark">
-                     Back
-                </a>
-                <button type="submit" class="btn btn-primary">
-                     save
-                </button>
-            </div>
-        </form>
+                <div class="form-group">
+                    <label for="category">category</label>
+                    <select id="category" name="category" required>
+                        <option value="">-- Sélect a category --</option>
+                        <% categories.forEach(category=> { %>
+                            <option value="<%= category.id %>">
+                                <%= category.catname %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div class="buttons-container">
+                    <a href="/event/events" class="btn btn-dark">
+                        Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        save
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="popup" class="popup"></div>
     </div>
-    
-    <div id="popup" class="popup"></div>
-</div>
 
-<script>
-    // Afficher les images sélectionnées en aperçu
-    document.getElementById('images').addEventListener('change', function(e) {
-        const previewContainer = document.getElementById('filePreview');
-        previewContainer.innerHTML = '';
-        
-        if (this.files) {
-            Array.from(this.files).forEach(file => {
-                const reader = new FileReader();
-                
-                reader.onload = function(event) {
-                    const previewItem = document.createElement('div');
-                    previewItem.className = 'file-preview-item';
-                    
-                    const img = document.createElement('img');
-                    img.src = event.target.result;
-                    img.alt = 'Preview';
-                    
-                    previewItem.appendChild(img);
-                    previewContainer.appendChild(previewItem);
-                }
-                
-                reader.readAsDataURL(file);
-            });
-        }
-    });
-    
-    // Animation pour les champs de formulaire
-    document.querySelectorAll('input, select, textarea').forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentNode.querySelector('label').style.color = 'var(--primary-color)';
-        });
-        
-        input.addEventListener('blur', function() {
-            if (!this.value) {
-                this.parentNode.querySelector('label').style.color = 'var(--text-color)';
+    <script>
+        // Afficher les images sélectionnées en aperçu
+        document.getElementById('images').addEventListener('change', function (e) {
+            const previewContainer = document.getElementById('filePreview');
+            previewContainer.innerHTML = '';
+
+            if (this.files) {
+                Array.from(this.files).forEach(file => {
+                    const reader = new FileReader();
+
+                    reader.onload = function (event) {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'file-preview-item';
+
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.alt = 'Preview';
+
+                        previewItem.appendChild(img);
+                        previewContainer.appendChild(previewItem);
+                    }
+
+                    reader.readAsDataURL(file);
+                });
             }
         });
-    });
-    
-    // Fonction pour afficher les messages popup
-    function showPopup(message, type) {
-        const popup = document.getElementById('popup');
-        popup.textContent = message;
-        popup.className = `popup ${type}`;
-        popup.style.display = 'block';
-        
-        setTimeout(() => {
-            popup.style.display = 'none';
-        }, 5000);
-    }
-    
-</script>
+
+        // Animation pour les champs de formulaire
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            input.addEventListener('focus', function () {
+                this.parentNode.querySelector('label').style.color = 'var(--primary-color)';
+            });
+
+            input.addEventListener('blur', function () {
+                if (!this.value) {
+                    this.parentNode.querySelector('label').style.color = 'var(--text-color)';
+                }
+            });
+        });
+
+        // Fonction pour afficher les messages popup
+        function showPopup(message, type) {
+            const popup = document.getElementById('popup');
+            popup.textContent = message;
+            popup.className = `popup ${type}`;
+            popup.style.display = 'block';
+
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 5000);
+        }
+
+    </script>
 </body>
+
 </html>

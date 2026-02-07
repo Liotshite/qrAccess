@@ -9,7 +9,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.json());
 
 
 // ===== Configuration EJS =====
@@ -24,7 +23,7 @@ app.use(express.static(path.join(__dirname, "statics")));
 
 
 // ===== Routes =====
-const authRoads = require("./routes/user.routes");   
+const authRoads = require("./routes/user.routes");
 const eventRoads = require("./routes/event.routes");
 const catRoads = require("./routes/category.routes");
 

@@ -5,7 +5,7 @@ const { name } = require("ejs");
 
 
 
-exports.renderLogin = (req,res) => {
+exports.renderLogin = (req, res) => {
   res.render("user/login");
 };
 
@@ -45,23 +45,23 @@ exports.login = async (req, res) => {
 
 
 
-exports.renderSignIn = (req,res) => {
+exports.renderSignIn = (req, res) => {
   res.render("user/signin");
 }
 
 
 
-exports.signin = async (req,res) => {
+exports.signin = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    var user = await userService.findByName(username);
+    const { name, password } = req.body;
+    var user = await userService.findByName(name);
     if (!user) {
       const hashed = await bcrypt.hash(password, 10);
-      user = {name : username, password : hashed}
+      user = { name: name, password: hashed }
       await userService.createUser(user);
-      res.redirect('/user/login?message=Inscription réussie');
-    }else{
-      res.redirect('/user/signin?message=ce nom est déjà associé à un compte');
+      res.redirect('/user/login?message=Inscription réussie, vous pouvez maintenant vous connecter');
+    } else {
+      res.redirect('/user/signin?message=Ce nom d\'utilisateur est déjà pris');
     }
   } catch (error) {
     console.error(error);
@@ -73,10 +73,10 @@ exports.signin = async (req,res) => {
 
 
 
-exports.viewprofile = async (req,res) => {
+exports.viewprofile = async (req, res) => {
   try {
     const user = req.user;
-    res.render('user/profile',{user});
+    res.render('user/profile', { user });
   } catch (err) {
     console.error(err);
     res.status(500).send('Erreur lors du chargement de la page.');
@@ -86,7 +86,7 @@ exports.viewprofile = async (req,res) => {
 
 
 
-exports.logout = async (req,res) => {
+exports.logout = async (req, res) => {
   if (req.session) {
     req.session.destroy(err => {
       if (err) {
