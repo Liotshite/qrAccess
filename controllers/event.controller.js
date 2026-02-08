@@ -10,9 +10,10 @@ exports.renderEvents = async (req, res) => {
 
 exports.renderViewEvent = async (req, res) => {
   try {
-    const { eventId } = req.params;
+    const eventId = Number(req.params.eventId);
+
     const event = await eventService.findById(eventId);
-    res.render("event/viewEvent", { event });
+    res.render("event/Qr/listQr", { event });
   } catch (error) {
     console.error(error);
     res.status(500).send('Une erreur s\'est produite');

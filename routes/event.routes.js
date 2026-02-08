@@ -7,15 +7,15 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 
 // Page event
-router.get("/events", eventController.renderEvents);
+router.get("/events", authMiddleware, eventController.renderEvents);
 
 // Page view Event
-router.get("/viewEvent", eventController.renderViewEvent);
+router.get("/viewEvent/:eventId", authMiddleware, eventController.renderViewEvent);
 
 
 
 // Page create event 
-router.get("/createEvent", eventController.renderCreateEvent);
+router.get("/createEvent", authMiddleware, eventController.renderCreateEvent);
 //Create event 
 router.post("/createEvent", authMiddleware, eventController.createEvent);
 

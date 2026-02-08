@@ -1,18 +1,25 @@
 const prisma = require("../prisma/client");
 // Find by the name 
 exports.findByName = async (eventname) => {
-  return await prisma.event.findFirst({
+  return await prisma.event.findMany({
     where: { eventname }
   });
 };
+
+
+// Find by id
+exports.findById = async (eventId) => {
+  return await prisma.event.findUnique({
+    where: { id: eventId }
+  });
+};
+
 
 // Find all events
 exports.findAll = async () => {
   return await prisma.event.findMany({
     where: {
-      deletedAt: {
-        not: null
-      }
+      deletedAt: null
     }
   });
 };
@@ -35,7 +42,13 @@ exports.createEvent = async (data) => {
 
 //count event in bdd
 exports.countEvents = async () => {
-  return prisma.event.count();
+  return prisma.event.count(
+    {
+      where: {
+        deletedAt: null
+      }
+    }
+  );
 };
 
 //delete event
