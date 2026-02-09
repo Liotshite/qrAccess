@@ -14,44 +14,57 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  name     String @unique
-  password String
+  id           Int      @id @default(autoincrement())
+  orgId        Int
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         String   // SUPER_ADMIN, ORG_ADMIN, OPERATOR
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime?
 
-  events Event[]
-  categories Category[]
-  
+  organization Organization @relation(fields: [orgId], references: [id])
+  scanLogs     ScanLog[]
+
   @@map("users")
 }
 
-model Event {
-  id          Int    @id @default(autoincrement())
-  eventname   String 
-  customer    String
-  description String
-  userId      Int
-  categoryId    Int
-  dateevent   DateTime
-  creationdate DateTime
-  deletedAt DateTime?
 
-  user User @relation(fields: [userId], references: [id])
-  category Category @relation(fields: [categoryId], references: [id])
-  qrs  Qr[]
+model Event {
+  id          Int      @id @default(autoincrement())
+  orgId       Int
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  qrs          Qr[]
 
   @@map("events")
 }
 
+
 model Qr {
-  id         Int      @id @default(autoincrement())
-  eventid    Int
-  information  String
-  creationdate DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  uniqueToken String   @unique
+  status      String   // active, revoked, expired, used_up
+  usageLimit  Int      
+  scansCount  Int      
+  validFrom   DateTime
+  validUntil  DateTime
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
 
-  event Event @relation(fields: [eventid], references: [id])
+  event    Event
+  scanLogs ScanLog[]
 
-  @@map("qrs")
+  @@map("qr_codes")
 }
+
 
 model Category {
   id       Int    @id @default(autoincrement())
@@ -61,4 +74,32 @@ model Category {
   usercat User @relation(fields: [userId], references: [id])
   events Event[]
   @@map("categories")
+}
+
+model ScanLog {
+  id        Int      @id @default(autoincrement())
+  qrId      Int
+  operatorId Int
+  scannedAt DateTime @default(now())
+  latitude  Float?
+  longitude Float?
+  status    String   // authorized, denied_expired, denied_duplicate
+
+  qr       Qr   @relation(fields: [qrId], references: [id])
+  operator User @relation(fields: [operatorId], references: [id])
+
+  @@map("scan_logs")
+}
+
+
+model Organization {
+  id               Int      @id @default(autoincrement())
+  name             String
+  subscriptionPlan String   @default("free")
+  createdAt        DateTime @default(now())
+
+  users  User[]
+  events Event[]
+
+  @@map("organizations")
 }

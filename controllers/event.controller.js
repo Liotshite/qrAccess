@@ -1,6 +1,8 @@
 const eventService = require('../services/event.service');
 const categoryService = require('../services/category.service');
 
+// ----------- render ----------------------
+
 exports.renderEvents = async (req, res) => {
   const events = await eventService.findAll();
   const nbr = await eventService.countEvents();
@@ -11,7 +13,6 @@ exports.renderEvents = async (req, res) => {
 exports.renderViewEvent = async (req, res) => {
   try {
     const eventId = Number(req.params.eventId);
-
     const event = await eventService.findById(eventId);
     res.render("event/Qr/listQr", { event });
   } catch (error) {
@@ -28,6 +29,49 @@ exports.renderCreateEvent = async (req, res) => {
 }
 
 
+
+exports.renderUpdateEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const event = await eventService.findById(eventId);
+    const categories = await categoryService.findAll();
+    res.render("event/updateEvent", { event, categories });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Une erreur s\'est produite');
+  }
+}
+
+
+
+exports.renderTrashEvent = async (req, res) => {
+  try {
+    const events = await eventService.findAllDeleted();
+    const nbr = await eventService.countEventsTrash();
+    res.render("event/trashEvent", { events, nbr });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Une erreur s\'est produite');
+  }
+}
+
+
+exports.researchTrashEvent = async (req, res) => {
+  const search = req.query.search;
+  const events = await eventService.findByNameTrash(search);
+  res.render("event/trashEvent", { events });
+}
+
+
+exports.researchEvent = async (req, res) => {
+  const search = req.query.search;
+  const events = await eventService.findByName(search);
+  res.render("event/listEvents", { events });
+}
+
+
+
+// ------------------- logic ------------------------
 exports.createEvent = async (req, res) => {
   try {
     var { eventName, customer, category, description, dateEv } = req.body;
@@ -57,17 +101,6 @@ exports.createEvent = async (req, res) => {
 }
 
 
-exports.renderUpdateEvent = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const event = await eventService.findById(eventId);
-    const categories = await categoryService.findAll();
-    res.render("event/updateEvent", { event, categories });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Une erreur s\'est produite');
-  }
-}
 
 
 exports.updateEvent = async (req, res) => {
@@ -91,7 +124,8 @@ exports.updateEvent = async (req, res) => {
 
 exports.deleteEvent = async (req, res) => {
   try {
-    const { eventId } = req.body;
+    console.log('le numero est', req.params.eventId);
+    const eventId = Number(req.params.eventId);
     await eventService.deleteEvent(eventId);
     res.redirect('/event/events?Event deleted');
   } catch (error) {
@@ -102,11 +136,12 @@ exports.deleteEvent = async (req, res) => {
 
 
 
+
 exports.restoreEvent = async (req, res) => {
   try {
-    const { eventId } = req.body;
+    const eventId = Number(req.params.eventId);
     await eventService.restoreEvent(eventId);
-    res.redirect('/event/events?Event restored');
+    res.redirect('/event/trashEvent?Event restored');
   } catch (error) {
     console.error(error);
     res.status(500).send('Une erreur s\'est produite');
@@ -117,9 +152,9 @@ exports.restoreEvent = async (req, res) => {
 
 exports.deletePermanentlyEvent = async (req, res) => {
   try {
-    const { eventId } = req.body;
+    const eventId = Number(req.params.eventId);
     await eventService.deletePermanentlyEvent(eventId);
-    res.redirect('/event/events?Event deleted permanently');
+    res.redirect('/event/trashEvent?Event deleted permanently');
   } catch (error) {
     console.error(error);
     res.status(500).send('Une erreur s\'est produite');
@@ -127,12 +162,4 @@ exports.deletePermanentlyEvent = async (req, res) => {
 }
 
 
-exports.renderTrashEvent = async (req, res) => {
-  try {
-    const events = await eventService.findAllDeleted();
-    res.render("event/trashEvent", { events });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Une erreur s\'est produite');
-  }
-}
+

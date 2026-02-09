@@ -2,10 +2,31 @@ const prisma = require("../prisma/client");
 // Find by the name 
 exports.findByName = async (eventname) => {
   return await prisma.event.findMany({
-    where: { eventname }
+    where: {
+      OR: [
+        { eventname: eventname },
+        { category: eventname },
+        { description: eventname }
+      ],
+      deletedAt: null
+    }
   });
 };
 
+
+// Find by the name Trash
+exports.findByNameTrash = async (eventname) => {
+  return await prisma.event.findMany({
+    where: {
+      OR: [
+        { eventname: eventname },
+        { category: eventname },
+        { description: eventname }
+      ],
+      deletedAt: { not: null }
+    }
+  });
+};
 
 // Find by id
 exports.findById = async (eventId) => {
@@ -50,6 +71,19 @@ exports.countEvents = async () => {
     }
   );
 };
+
+
+//count event in trash bdd 
+exports.countEventsTrash = async () => {
+  return prisma.event.count(
+    {
+      where: {
+        deletedAt: { not: null }
+      }
+    }
+  );
+};
+
 
 //delete event
 exports.deleteEvent = async (eventId) => {
