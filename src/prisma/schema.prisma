@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id           Int          @id @default(autoincrement())
+  createdAt    DateTime     @default(now())
+  deletedAt    DateTime?
+  email        String       @unique
+  fullName     String
+  orgId        Int
+  passwordHash String
+  role         String
+  categories   Category[]
+  event        Event[]
+  scanLogs     ScanLog[]
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@map("users")
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  description String?
+  userId      Int
+  deletedAt   DateTime?
+  catId       Int
+  createdAt   DateTime  @default(now())
+  endDate     DateTime
+  startDate   DateTime
+  title       String
+  category    Category  @relation(fields: [catId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  qrs         Qr[]
+
+  @@map("events")
+}
+
+model Qr {
+  id          Int       @id @default(autoincrement())
+  eventId     Int
+  uniqueToken String    @unique
+  status      String
+  usageLimit  Int
+  scansCount  Int
+  validFrom   DateTime
+  validUntil  DateTime
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  event       Event     @relation(fields: [eventId], references: [id])
+  scanLogs    ScanLog[]
+
+  @@map("qr_codes")
+}
+
+model Category {
+  id      Int     @id @default(autoincrement())
+  catname String  @unique
+  userId  Int
+  usercat User    @relation(fields: [userId], references: [id])
+  events  Event[]
+
+  @@map("categories")
+}
+
+model ScanLog {
+  id         Int      @id @default(autoincrement())
+  qrId       Int
+  operatorId Int
+  scannedAt  DateTime @default(now())
+  latitude   Float?
+  longitude  Float?
+  status     String
+  operator   User     @relation(fields: [operatorId], references: [id])
+  qr         Qr       @relation(fields: [qrId], references: [id])
+
+  @@map("scan_logs")
+}
+
+model Organization {
+  id               Int      @id @default(autoincrement())
+  name             String
+  subscriptionPlan String   @default("free")
+  createdAt        DateTime @default(now())
+  users            User[]
+
+  @@map("organizations")
+}
