@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const catController = require("../controllers/category.controller");
+const catController = require("../controllers/api.category.controller");
 const authMiddleware = require('../middleware/authMiddleware');
 
 
-// Page list categories
+// list categories
 router.get("/cats", authMiddleware, catController.renderCats);
 
 
-// Page creation
-router.get("/createCat", authMiddleware, catController.renderCreateCat);
-
+// create cat
 router.post("/createCat", authMiddleware, catController.createCat);
 
 
+// delete cat
+router.delete("/deleteCat/:id", authMiddleware, catController.deletecat);
 
 module.exports = router;
 

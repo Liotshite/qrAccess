@@ -10,10 +10,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
-// ===== Configuration EJS =====
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
 
 
 // ===== Fichiers statiques =====
@@ -30,8 +26,6 @@ const catRoads = require("./routes/category.routes");
 app.use("/user", authRoads);
 app.use("/event", eventRoads);
 app.use("/cat", catRoads);
-
-
 
 
 module.exports = app;
