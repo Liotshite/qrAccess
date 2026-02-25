@@ -3,6 +3,15 @@ const app = express();
 const path = require("path");
 const cookieParser = require("cookie-parser");
 
+const cors = require('cors');
+
+// ===== Configurer CORS pour React =====
+app.use(cors({
+    origin: "http://localhost:5173", // Remplacer par l'URL de ton frontend React
+    credentials: true // Très important puisque tu utilises cookie-parser
+}));
+
+
 
 // ===== Middlewares globaux =====
 app.use(express.json());
