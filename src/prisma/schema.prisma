@@ -15,88 +15,114 @@ datasource db {
 }
 
 
+enum UserRole {
+  SUPER_ADMIN
+  ORG_ADMIN
+  ORG_AGENT
+  OPERATOR
+}
+
+enum QrStatus {
+  active
+  revoked
+  expired
+  used_up
+}
+
+enum ScanStatus {
+  authorized
+  denied_expired
+  denied_revoked
+  denied_limit_reached
+}
+
+//////////////////////////////////////////////////////
+// MODELS
+//////////////////////////////////////////////////////
 
 model User {
-  id           Int          @id @default(autoincrement())
-  createdAt    DateTime     @default(now())
-  deletedAt    DateTime?
-  email        String       @unique
-  fullName     String
-  orgId        Int
-  passwordHash String
-  role         String
+  id           Int       @id @default(autoincrement())
+  fullName     String?   @map("full_name")
+  email        String    @unique
+  passwordHash String?   @map("password_hash")
+  role         UserRole
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime? @map("created_at")
+  orgId        Int?      @map("org_id")
+
+  organization Organization? @relation(fields: [orgId], references: [id])
+  events       Event[]
   categories   Category[]
-  event        Event[]
-  scanLogs     ScanLog[]
-  organization Organization @relation(fields: [orgId], references: [id])
 
   @@map("users")
 }
 
+model Organization {
+  id               Int       @id @default(autoincrement())
+  name             String?
+  createdAt        DateTime? @map("created_at")
+  deletedAt        DateTime? @map("deleted_at")
+  subscriptionPlan String?   @map("subscription_plan") // free, premium, enterprise
+
+  users User[]
+
+  @@map("organizations")
+}
+
 model Event {
   id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  title       String?
   description String?
-  userId      Int
-  deletedAt   DateTime?
-  catId       Int
-  createdAt   DateTime  @default(now())
-  endDate     DateTime
-  startDate   DateTime
-  title       String
-  category    Category  @relation(fields: [catId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
-  qrs         Qr[]
+  categoryId  Int?      @map("categoryId")
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  deletedAt   DateTime? @map("deleted_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  category  Category? @relation(fields: [categoryId], references: [id])
+  qrCodes   QrCode[]
 
   @@map("events")
 }
 
-model Qr {
+model QrCode {
   id          Int       @id @default(autoincrement())
-  eventId     Int
-  uniqueToken String    @unique
-  status      String
-  usageLimit  Int
-  scansCount  Int
-  validFrom   DateTime
-  validUntil  DateTime
-  createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
-  event       Event     @relation(fields: [eventId], references: [id])
-  scanLogs    ScanLog[]
+  eventId     Int       @map("event_id")
+  uniqueToken String    @unique @map("unique_token")
+  status      QrStatus
+  usageLimit  Int       @default(1) @map("usage_limit")
+  scansCount  Int       @default(0) @map("scans_count")
+  validFrom   DateTime? @map("valid_from")
+  validUntil  DateTime? @map("valid_until")
+  deletedAt   DateTime? @map("deleted_at")
+
+  event     Event     @relation(fields: [eventId], references: [id])
+  scanLogs  ScanLog[]
 
   @@map("qr_codes")
 }
 
 model Category {
-  id      Int     @id @default(autoincrement())
-  catname String  @unique
-  userId  Int
-  usercat User    @relation(fields: [userId], references: [id])
-  events  Event[]
+  id       Int     @id @default(autoincrement())
+  catTitle String? @map("catTitle")
+  userId   Int?    @map("userId")
 
-  @@map("categories")
+  user   User?  @relation(fields: [userId], references: [id])
+  events Event[]
+
+  @@map("category")
 }
 
 model ScanLog {
-  id         Int      @id @default(autoincrement())
-  qrId       Int
-  operatorId Int
-  scannedAt  DateTime @default(now())
-  latitude   Float?
-  longitude  Float?
-  status     String
-  operator   User     @relation(fields: [operatorId], references: [id])
-  qr         Qr       @relation(fields: [qrId], references: [id])
+  id           Int       @id @default(autoincrement())
+  qrCodeId     Int       @map("qr_code_id")
+  scannedAt    DateTime? @map("scanned_at")
+  locationLat  Float?    @map("location_lat")
+  locationLong Float?    @map("location_long")
+  status       ScanStatus
+
+  qrCode QrCode @relation(fields: [qrCodeId], references: [id])
 
   @@map("scan_logs")
-}
-
-model Organization {
-  id               Int      @id @default(autoincrement())
-  name             String
-  subscriptionPlan String   @default("free")
-  createdAt        DateTime @default(now())
-  users            User[]
-
-  @@map("organizations")
 }
