@@ -7,7 +7,7 @@ const cors = require('cors');
 
 // ===== Configurer CORS pour React =====
 app.use(cors({
-    origin: "http://localhost:5173", // Remplacer par l'URL de ton frontend React
+    origin: "http://localhost:3000", // Remplacer par l'URL de ton frontend React
     credentials: true // Très important puisque tu utilises cookie-parser
 }));
 

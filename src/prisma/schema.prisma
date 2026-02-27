@@ -42,6 +42,7 @@ enum ScanStatus {
 
 model User {
   id           Int       @id @default(autoincrement())
+  clef         String    @unique @default(uuid())
   fullName     String?   @map("full_name")
   email        String    @unique
   passwordHash String?   @map("password_hash")
@@ -49,8 +50,11 @@ model User {
   deletedAt    DateTime? @map("deleted_at")
   createdAt    DateTime? @map("created_at")
   orgId        Int?      @map("org_id")
+  createdById  Int?      @map("created_by_id")
 
   organization Organization? @relation(fields: [orgId], references: [id])
+  creator      User?         @relation("UserCreator", fields: [createdById], references: [id])
+  createdUsers User[]        @relation("UserCreator")
   events       Event[]
   categories   Category[]
 
