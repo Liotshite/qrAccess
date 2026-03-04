@@ -1,0 +1,155 @@
+"use client";
+
+import Link from "next/link";
+
+export default function Dashboard() {
+    return (
+        <div className="max-w-7xl mx-auto space-y-8">
+            {/* Welcome Banner */}
+            <div className="relative overflow-hidden bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-bl-full blur-[60px] pointer-events-none -mr-10 -mt-10" />
+                <div className="absolute bottom-0 right-32 w-48 h-48 bg-blue-100/40 rounded-t-full blur-[50px] pointer-events-none" />
+
+                <div className="relative z-10 max-w-2xl">
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2 mt-2">Welcome back, Lionel 👋</h2>
+                    <p className="text-slate-500 text-lg mb-8">Here's what's happening in your organization today.</p>
+                    <div className="flex gap-4">
+                        <Link href="/dashboard/qrcodes/new" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-sm flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                            Generate QR Code
+                        </Link>
+                        <Link href="/dashboard/events/new" className="px-6 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-xl shadow-sm active:scale-95 transition-all text-sm">
+                            Create Event
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {/* Stat 1 */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Active QR Codes</p>
+                            <h4 className="text-2xl font-bold text-slate-900">1,248</h4>
+                        </div>
+                    </div>
+                    <div className="flex items-center text-sm">
+                        <span className="text-emerald-500 font-medium flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            12%
+                        </span>
+                        <span className="text-slate-400 ml-2">from last month</span>
+                    </div>
+                </div>
+
+                {/* Stat 2 */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Total Scans</p>
+                            <h4 className="text-2xl font-bold text-slate-900">8,495</h4>
+                        </div>
+                    </div>
+                    <div className="flex items-center text-sm">
+                        <span className="text-emerald-500 font-medium flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            24%
+                        </span>
+                        <span className="text-slate-400 ml-2">from last month</span>
+                    </div>
+                </div>
+
+                {/* Stat 3 */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Upcoming Events</p>
+                            <h4 className="text-2xl font-bold text-slate-900">3</h4>
+                        </div>
+                    </div>
+                    <div className="flex items-center text-sm">
+                        <span className="text-slate-500 font-medium">Next: Tech Conference 2026</span>
+                    </div>
+                </div>
+
+                {/* Stat 4 */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Active Agents</p>
+                            <h4 className="text-2xl font-bold text-slate-900">12</h4>
+                        </div>
+                    </div>
+                    <div className="flex items-center text-sm">
+                        <span className="text-slate-500 font-medium">Out of 15 allowed</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Recent Activity Table */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-slate-900">Recent Scans</h3>
+                    <button className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">View all</button>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-100/80 text-slate-600 text-sm border-b-2 border-slate-300">
+                                <th className="px-8 py-4 font-semibold uppercase tracking-wider">Access Code</th>
+                                <th className="px-8 py-4 font-semibold uppercase tracking-wider">Event / Location</th>
+                                <th className="px-8 py-4 font-semibold uppercase tracking-wider">Agent</th>
+                                <th className="px-8 py-4 font-semibold uppercase tracking-wider">Time</th>
+                                <th className="px-8 py-4 font-semibold uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y-2 divide-slate-300 text-slate-700 text-sm">
+                            <tr className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-8 py-4 font-medium text-slate-900">VIP-0042</td>
+                                <td className="px-8 py-4">Gala Dinner - Main Entrance</td>
+                                <td className="px-8 py-4">David G.</td>
+                                <td className="px-8 py-4 text-slate-500">2 mins ago</td>
+                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Granted</span></td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-8 py-4 font-medium text-slate-900">STD-1092</td>
+                                <td className="px-8 py-4">Tech Conference - Gate C</td>
+                                <td className="px-8 py-4">Sarah T.</td>
+                                <td className="px-8 py-4 text-slate-500">15 mins ago</td>
+                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Denied</span></td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-8 py-4 font-medium text-slate-900">VIP-0021</td>
+                                <td className="px-8 py-4">Gala Dinner - VIP Lounge</td>
+                                <td className="px-8 py-4">David G.</td>
+                                <td className="px-8 py-4 text-slate-500">1 hour ago</td>
+                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Granted</span></td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-8 py-4 font-medium text-slate-900">STAFF-02</td>
+                                <td className="px-8 py-4">Warehouse - Back Door</td>
+                                <td className="px-8 py-4">Mike R.</td>
+                                <td className="px-8 py-4 text-slate-500">3 hours ago</td>
+                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Granted</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}
