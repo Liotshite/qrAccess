@@ -15,6 +15,10 @@ datasource db {
 }
 
 
+//////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////
+
 enum UserRole {
   SUPER_ADMIN
   ORG_ADMIN
@@ -36,97 +40,114 @@ enum ScanStatus {
   denied_limit_reached
 }
 
-//////////////////////////////////////////////////////
-// MODELS
-//////////////////////////////////////////////////////
+//////////////////////////////////////////////////
+// TABLES
+//////////////////////////////////////////////////
 
 model User {
-  id           Int       @id @default(autoincrement())
-  clef         String    @unique @default(uuid())
-  fullName     String?   @map("full_name")
-  email        String    @unique
-  passwordHash String?   @map("password_hash")
-  role         UserRole
-  deletedAt    DateTime? @map("deleted_at")
-  createdAt    DateTime? @map("created_at")
-  orgId        Int?      @map("org_id")
-  createdById  Int?      @map("created_by_id")
+  id            Int       @id @default(autoincrement())
+  clef          String    @unique
+  full_name     String
+  email         String    @unique
+  password_hash String
+  role          UserRole
+  deleted_at    DateTime?
+  created_at    DateTime  @default(now())
+  last_login    DateTime?
 
-  organization Organization? @relation(fields: [orgId], references: [id])
-  creator      User?         @relation("UserCreator", fields: [createdById], references: [id])
-  createdUsers User[]        @relation("UserCreator")
-  events       Event[]
-  categories   Category[]
+  org_id        Int?
+  organization  Organization? @relation(fields: [org_id], references: [id])
 
-  @@map("users")
+  scan_logs     ScanLog[]
 }
 
 model Organization {
-  id               Int       @id @default(autoincrement())
-  name             String?
-  createdAt        DateTime? @map("created_at")
-  deletedAt        DateTime? @map("deleted_at")
-  subscriptionPlan String?   @map("subscription_plan") // free, premium, enterprise
+  id                Int      @id @default(autoincrement())
+  name              String
+  created_at        DateTime @default(now())
+  deleted_at        DateTime?
 
-  users User[]
+  subscription_plan Int?
+  plan              Plan? @relation(fields: [subscription_plan], references: [id])
 
-  @@map("organizations")
+  users             User[]
+  events            Event[]
 }
 
 model Event {
-  id          Int       @id @default(autoincrement())
-  userId      Int       @map("user_id")
-  title       String?
+  id          Int      @id @default(autoincrement())
+  title       String
   description String?
-  categoryId  Int?      @map("categoryId")
-  startDate   DateTime? @map("start_date")
-  endDate     DateTime? @map("end_date")
-  deletedAt   DateTime? @map("deleted_at")
+  start_date  DateTime
+  end_date    DateTime
+  create_at   DateTime @default(now())
+  deleted_at  DateTime?
 
-  user      User     @relation(fields: [userId], references: [id])
-  category  Category? @relation(fields: [categoryId], references: [id])
-  qrCodes   QrCode[]
+  org_id      Int
+  organization Organization @relation(fields: [org_id], references: [id])
 
-  @@map("events")
+  qr_codes    QrCode[]
+  deroulements Deroulement[]
+  @@index([org_id])
 }
 
 model QrCode {
-  id          Int       @id @default(autoincrement())
-  eventId     Int       @map("event_id")
-  uniqueToken String    @unique @map("unique_token")
-  status      QrStatus
-  usageLimit  Int       @default(1) @map("usage_limit")
-  scansCount  Int       @default(0) @map("scans_count")
-  validFrom   DateTime? @map("valid_from")
-  validUntil  DateTime? @map("valid_until")
-  deletedAt   DateTime? @map("deleted_at")
+  id            Int      @id @default(autoincrement())
+  information   String?
+  unique_token  String   @unique
+  status        QrStatus
+  usage_limit   Int      @default(1)
+  scans_count   Int      @default(0)
+  valid_from    DateTime?
+  valid_until   DateTime?
+  deleted_at    DateTime?
+  level         Int?
 
-  event     Event     @relation(fields: [eventId], references: [id])
-  scanLogs  ScanLog[]
+  event_id      Int
+  event         Event @relation(fields: [event_id], references: [id])
 
-  @@map("qr_codes")
-}
-
-model Category {
-  id       Int     @id @default(autoincrement())
-  catTitle String? @map("catTitle")
-  userId   Int?    @map("userId")
-
-  user   User?  @relation(fields: [userId], references: [id])
-  events Event[]
-
-  @@map("category")
+  scan_logs     ScanLog[]
 }
 
 model ScanLog {
-  id           Int       @id @default(autoincrement())
-  qrCodeId     Int       @map("qr_code_id")
-  scannedAt    DateTime? @map("scanned_at")
-  locationLat  Float?    @map("location_lat")
-  locationLong Float?    @map("location_long")
-  status       ScanStatus
+  id            Int      @id @default(autoincrement())
+  scanned_at    DateTime @default(now())
+  location_lat  Float?
+  location_long Float?
+  status        ScanStatus
 
-  qrCode QrCode @relation(fields: [qrCodeId], references: [id])
+  qr_code_id    Int
+  qr_code       QrCode @relation(fields: [qr_code_id], references: [id])
 
-  @@map("scan_logs")
+  scanned_by_id Int
+  scanned_by    User @relation(fields: [scanned_by_id], references: [id])
+  
+  @@index([qr_code_id])
+  }
+
+model Area {
+  id                   Int    @id @default(autoincrement())
+  area_name            String
+  accreditation_level  Int
+
+  deroulements         Deroulement[]
+}
+
+model Plan {
+  id       Int    @id @default(autoincrement())
+  title    String
+  cost     Int
+  features Json
+
+  organizations Organization[]
+}
+
+model Deroulement {
+  id       Int @id @default(autoincrement())
+
+  id_event Int
+  event    Event @relation(fields: [id_event], references: [id])
+
+  id_area  Int
+  area     Area @relation(fields: [id_area], references: [id])
 }

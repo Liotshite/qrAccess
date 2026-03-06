@@ -174,7 +174,7 @@ export default function Home() {
       {/* Simple Footer */}
       <footer className="w-full border-t border-slate-200 py-8 bg-slate-50 z-20">
         <div className="container mx-auto px-6 text-center text-sm text-slate-500">
-          <p>&copy; {new Date().getFullYear()} QR Access. All rights reserved.</p>
+          <p>&copy; 2026 QR Access. All rights reserved.</p>
         </div>
       </footer>
     </div>
