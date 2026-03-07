@@ -1,11 +1,25 @@
 const prisma = require("../prisma/client");
 
-exports.findByName = (name) => {
+exports.findByEmail = (email) => {
   return prisma.user.findUnique({
-    where: { email: name }
+    where: { email: email }
   });
 };
 
-exports.createUser = (data) => {
-  return prisma.user.create({ data });
+exports.createOrgAndAdminUser = async (orgData, userData) => {
+  // Use a transaction since we are creating both an organization and its admin user
+  return await prisma.$transaction(async (tx) => {
+    const org = await tx.organization.create({
+      data: orgData
+    });
+
+    const user = await tx.user.create({
+      data: {
+        ...userData,
+        org_id: org.id
+      }
+    });
+
+    return { org, user };
+  });
 };

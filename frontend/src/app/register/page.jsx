@@ -20,21 +20,57 @@ export default function Register() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
 
         if (formData.password !== formData.confirmPassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
             return;
         }
 
         if (formData.organizationName !== formData.confirmOrganizationName) {
-            alert("Organization names do not match!");
+            setError("Organization names do not match!");
             return;
         }
 
-        // TODO: implement signup API call
-        console.log("Registering...", formData);
+        setLoading(true);
+
+        try {
+            const res = await fetch("http://localhost:5000/user/signin", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    organizationName: formData.organizationName,
+                    password: formData.password,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setSuccess(true);
+                // Redirect user after short delay or instantly
+                setTimeout(() => {
+                    window.location.href = "/login";
+                }, 2000);
+            } else {
+                setError(data.message || "Something went wrong during registration.");
+            }
+        } catch (err) {
+            console.error("API Error:", err);
+            setError("Failed to connect to the server.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -72,6 +108,18 @@ export default function Register() {
                             Sign up to start generating secure QR codes for your organization.
                         </p>
                     </div>
+
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm text-center font-medium animate-pulse">
+                            {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm text-center font-medium">
+                            Registration successful! Redirecting to login...
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Full Name */}

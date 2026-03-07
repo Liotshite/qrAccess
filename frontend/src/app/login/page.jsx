@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setFormData((prev) => ({
@@ -16,10 +20,37 @@ export default function Login() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // TODO: implement login API call
-        console.log("Logging in...", formData);
+        setError("");
+        setLoading(true);
+
+        try {
+            const res = await fetch("http://localhost:5000/user/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // Save token to localStorage for authenticated requests
+                localStorage.setItem("qr_access_token", data.token);
+
+                // Redirect to dashboard
+                router.push("/dashboard");
+            } else {
+                setError(data.message || "Invalid credentials.");
+            }
+        } catch (err) {
+            console.error("Login Error:", err);
+            setError("Unable to connect to the server.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -57,6 +88,12 @@ export default function Login() {
                             Enter your email and password to access your account.
                         </p>
                     </div>
+
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm text-center font-medium animate-pulse">
+                            {error}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Email Address */}
@@ -99,9 +136,10 @@ export default function Login() {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full mt-6 py-3.5 px-4 bg-gradient-to-r from-blue-600 to-emerald-500 hover:from-blue-700 hover:to-emerald-600 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                            disabled={loading}
+                            className={`w-full mt-6 py-3.5 px-4 bg-gradient-to-r ${loading ? 'from-slate-400 to-slate-500 cursor-not-allowed' : 'from-blue-600 to-emerald-500 hover:from-blue-700 hover:to-emerald-600 shadow-lg shadow-blue-500/20'} text-white font-medium rounded-lg transition-all active:scale-[0.98]`}
                         >
-                            Sign In
+                            {loading ? "Signing in..." : "Sign In"}
                         </button>
                     </form>
 
