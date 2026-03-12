@@ -23,17 +23,33 @@ export default function Register() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [hasOrganization, setHasOrganization] = useState(true);
+
+    // Strict Password Validator matching the backend rules
+    const isValidPassword = (password) => {
+        if (password.length < 12) return false;
+        if (!/[A-Z]/.test(password)) return false;
+        if (!/[a-z]/.test(password)) return false;
+        if (!/[0-9]/.test(password)) return false;
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false;
+        return true;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+
+        if (!isValidPassword(formData.password)) {
+            setError("Le mot de passe doit contenir au moins 12 caractères, incluant des majuscules, des minuscules, des chiffres et des symboles spéciaux (!@#$).");
+            return;
+        }
 
         if (formData.password !== formData.confirmPassword) {
             setError("Passwords do not match!");
             return;
         }
 
-        if (formData.organizationName !== formData.confirmOrganizationName) {
+        if (hasOrganization && formData.organizationName.trim() !== formData.confirmOrganizationName.trim()) {
             setError("Organization names do not match!");
             return;
         }
@@ -46,10 +62,11 @@ export default function Register() {
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include", // Important to capture the HttpOnly cookie
                 body: JSON.stringify({
                     fullName: formData.fullName,
                     email: formData.email,
-                    organizationName: formData.organizationName,
+                    organizationName: hasOrganization ? formData.organizationName : formData.fullName,
                     password: formData.password,
                 }),
             });
@@ -155,35 +172,51 @@ export default function Register() {
                         </div>
 
                         {/* Organization Group - Side by Side */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-slate-700 block mb-1">
-                                    Organization Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="organizationName"
-                                    value={formData.organizationName}
-                                    onChange={handleChange}
-                                    placeholder="Acme Corp"
-                                    required
-                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-400 text-sm text-slate-800"
-                                />
+                        {hasOrganization && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-slate-700 block mb-1">
+                                        Organization Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="organizationName"
+                                        value={formData.organizationName}
+                                        onChange={handleChange}
+                                        placeholder="Acme Corp"
+                                        required
+                                        className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-400 text-sm text-slate-800"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-slate-700 block mb-1">
+                                        Confirm Org Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="confirmOrganizationName"
+                                        value={formData.confirmOrganizationName}
+                                        onChange={handleChange}
+                                        placeholder="Acme Corp"
+                                        required
+                                        className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-400 text-sm text-slate-800"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-slate-700 block mb-1">
-                                    Confirm Org Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="confirmOrganizationName"
-                                    value={formData.confirmOrganizationName}
-                                    onChange={handleChange}
-                                    placeholder="Acme Corp"
-                                    required
-                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none placeholder:text-slate-400 text-sm text-slate-800"
-                                />
-                            </div>
+                        )}
+
+                        {/* No Organization Checkbox */}
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="noOrganization"
+                                checked={!hasOrganization}
+                                onChange={() => setHasOrganization(!hasOrganization)}
+                                className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
+                            />
+                            <label htmlFor="noOrganization" className="text-sm text-slate-600">
+                                Je n'ai pas d'organisation (Utiliser mon nom complet)
+                            </label>
                         </div>
 
                         {/* Password Group - Side by Side */}
@@ -217,13 +250,17 @@ export default function Register() {
                                 />
                             </div>
                         </div>
+                        <p className="text-xs text-slate-500 -mt-2">
+                            Doit contenir au moins 12 caractères, incluant majuscules, minuscules, nombres et symboles (!@#$).
+                        </p>
 
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full mt-6 py-3.5 px-4 bg-gradient-to-r from-blue-600 to-emerald-500 hover:from-blue-700 hover:to-emerald-600 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                            disabled={loading}
+                            className={`w-full mt-6 py-3.5 px-4 bg-gradient-to-r ${loading ? 'from-slate-400 to-slate-500 cursor-not-allowed' : 'from-blue-600 to-emerald-500 hover:from-blue-700 hover:to-emerald-600'} text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]`}
                         >
-                            Register Organization
+                            {loading ? "Registering..." : (hasOrganization ? "Register Organization" : "Create Account")}
                         </button>
                     </form>
 

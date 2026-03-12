@@ -31,16 +31,15 @@ export default function Login() {
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include", // Capture HttpOnly cookie
                 body: JSON.stringify(formData),
             });
 
             const data = await res.json();
 
             if (data.success) {
-                // Save token to localStorage for authenticated requests
-                localStorage.setItem("qr_access_token", data.token);
-
-                // Redirect to dashboard
+                // The backend now sets an HttpOnly cookie securely.
+                // We no longer manually sore it in localStorage.
                 router.push("/dashboard");
             } else {
                 setError(data.message || "Invalid credentials.");
