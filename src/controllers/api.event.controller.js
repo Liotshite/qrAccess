@@ -1,145 +1,152 @@
 const eventService = require('../services/event.service');
-const categoryService = require('../services/category.service');
 
-// ----------- render ----------------------
+// Get all events for the current organization
+exports.getEvents = async (req, res) => {
+    try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
 
-exports.renderEvents = async (req, res) => {
-    const events = await eventService.findAll();
-    const nbr = await eventService.countEvents();
-    res.status(200).json({ events, nbr });
+        const orgId = req.user.org_id;
+        const search = req.query.search;
+
+        let events;
+        if (search) {
+            events = await eventService.findByTitle(orgId, search);
+        } else {
+            events = await eventService.findAll(orgId);
+        }
+
+        // Format for frontend
+        const formattedEvents = events.map(e => {
+            const now = new Date();
+            let status = "Active";
+            if (new Date(e.start_date) > now) status = "Upcoming";
+            if (new Date(e.end_date) < now) status = "Past";
+
+            return {
+                id: e.id,
+                name: e.title,
+                date: `${new Date(e.start_date).toLocaleDateString()} - ${new Date(e.end_date).toLocaleDateString()}`,
+                location: e.location || "N/A",
+                qrs: e._count?.qr_codes || 0,
+                status: status
+            };
+        });
+
+        res.status(200).json({ success: true, events: formattedEvents });
+    } catch (error) {
+        console.error("Error fetching events:", error);
+        res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
 }
 
-
-exports.renderViewEvent = async (req, res) => {
+// Get single event details
+exports.getEventById = async (req, res) => {
     try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+
+        const orgId = req.user.org_id;
         const eventId = Number(req.params.eventId);
-        const event = await eventService.findById(eventId);
-        res.status(200).json({ event });
+
+        const event = await eventService.findById(orgId, eventId);
+        if (!event) {
+            return res.status(404).json({ success: false, message: "Événement introuvable" });
+        }
+
+        res.status(200).json({ success: true, event });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite');
+        console.error("Error fetching event:", error);
+        res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 }
 
-
-
-
-exports.renderTrashEvent = async (req, res) => {
-    try {
-        const events = await eventService.findAllDeleted();
-        const nbr = await eventService.countEventsTrash();
-        res.status(200).json({ events, nbr });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite');
-    }
-}
-
-
-exports.researchTrashEvent = async (req, res) => {
-    const search = req.query.search;
-    const events = await eventService.findByNameTrash(search);
-    res.status(200).json({ events });
-}
-
-
-exports.researchEvent = async (req, res) => {
-    const search = req.query.search;
-    const events = await eventService.findByName(search);
-    res.status(200).json({ events });
-}
-
-
-
-// ------------------- logic ------------------------
+// Create a new event
 exports.createEvent = async (req, res) => {
     try {
-        var { eventName, customer, category, description, dateEv } = req.body;
-        var event = await eventService.findByName(eventName);
-        var cat = parseInt(category);
-        if (!event) {
-            const Cdate = new Date();
-            const userId = req.user.id;
-            event = {
-                eventname: eventName,
-                customer: customer,
-                description: description,
-                userId: userId,
-                categoryId: cat,
-                dateevent: new Date(dateEv),
-                creationdate: Cdate
-            }
-            await eventService.createEvent(event);
-            res.status(200).json({ message: 'Event created' });
-        } else {
-            res.status(400).json({ message: 'Event already exist' });
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
         }
+
+        const { title, description, location, startDate, endDate } = req.body;
+
+        if (!title || !startDate || !endDate) {
+            return res.status(400).json({ success: false, message: "Titre, Date de début et Date de fin sont requis" });
+        }
+
+        const orgId = req.user.org_id;
+
+        const newEvent = await eventService.createEvent({
+            title: title,
+            description: description,
+            location: location,
+            start_date: new Date(startDate),
+            end_date: new Date(endDate),
+            org_id: orgId
+        });
+
+        res.status(201).json({ success: true, message: 'Événement créé avec succès', event: newEvent });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite.');
+        console.error("Error creating event:", error);
+        res.status(500).json({ success: false, message: "Erreur serveur lors de la création" });
     }
 }
 
-
-
-
+// Update an event
 exports.updateEvent = async (req, res) => {
     try {
-        const { eventId, eventName, customer, category, description, dateEv } = req.body;
-        await eventService.updateEvent(eventId, {
-            eventname: eventName,
-            customer: customer,
-            description: description,
-            categoryId: parseInt(category),
-            dateevent: new Date(dateEv)
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+
+        const orgId = req.user.org_id;
+        const eventId = Number(req.params.eventId);
+        const { title, description, location, startDate, endDate } = req.body;
+
+        // Verify ownership first
+        const existingEvent = await eventService.findById(orgId, eventId);
+        if (!existingEvent) {
+            return res.status(404).json({ success: false, message: "Événement introuvable ou non autorisé" });
+        }
+
+        const updatedEvent = await eventService.updateEvent(eventId, {
+            title,
+            description,
+            location,
+            start_date: startDate ? new Date(startDate) : undefined,
+            end_date: endDate ? new Date(endDate) : undefined
         });
-        res.status(200).json({ message: 'Event updated' });
+
+        res.status(200).json({ success: true, message: 'Événement mis à jour', event: updatedEvent });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite');
+        console.error("Error updating event:", error);
+        res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 }
 
-
-
+// Delete an event (Soft Delete)
 exports.deleteEvent = async (req, res) => {
     try {
-        console.log('le numero est', req.params.eventId);
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+
+        const orgId = req.user.org_id;
         const eventId = Number(req.params.eventId);
+
+        // Verify ownership
+        const existingEvent = await eventService.findById(orgId, eventId);
+        if (!existingEvent) {
+            return res.status(404).json({ success: false, message: "Événement introuvable" });
+        }
+
         await eventService.deleteEvent(eventId);
-        res.status(200).json({ message: 'Event deleted' });
+        res.status(200).json({ success: true, message: 'Événement supprimé' });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite');
+        console.error("Error deleting event:", error);
+        res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 }
-
-
-
-
-exports.restoreEvent = async (req, res) => {
-    try {
-        const eventId = Number(req.params.eventId);
-        await eventService.restoreEvent(eventId);
-        res.status(200).json({ message: 'Event restored' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite');
-    }
-}
-
-
-
-exports.deletePermanentlyEvent = async (req, res) => {
-    try {
-        const eventId = Number(req.params.eventId);
-        await eventService.deletePermanentlyEvent(eventId);
-        res.status(200).json({ message: 'Event deleted permanently' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Une erreur s\'est produite');
-    }
-}
-
-
 

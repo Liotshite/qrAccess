@@ -1,16 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function EventsPage() {
-    // Dummy data for demonstration
-    const [events, setEvents] = useState([
-        { id: "1", name: "Gala Dinner 2026", date: "Oct 24 - Oct 25, 2026", location: "Grand Hotel, Paris", qrs: 145, status: "Upcoming" },
-        { id: "2", name: "Tech Conference Q3", date: "Nov 12 - Nov 14, 2026", location: "Convention Center", qrs: 890, status: "Upcoming" },
-        { id: "3", name: "Weekly Team Sync", date: "Every Monday", location: "HQ - Room 4B", qrs: 25, status: "Active" },
-        { id: "4", name: "Summer Retreat", date: "Jul 10 - Jul 15, 2025", location: "Lake Resort", qrs: 50, status: "Past" },
-    ]);
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/events", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include"
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    setEvents(data.events || []);
+                } else {
+                    setError("Impossible de charger les événements.");
+                }
+            } catch (err) {
+                console.error("Error fetching events:", err);
+                setError("Erreur de connexion au serveur.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEvents();
+    }, []);
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
@@ -69,42 +92,67 @@ export default function EventsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y-2 divide-slate-300 text-slate-700 text-sm">
-                            {events.map((event) => (
-                                <tr key={event.id} className="hover:bg-slate-50/50 transition-colors group">
-                                    <td className="px-6 py-4 font-medium text-slate-900">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            </div>
-                                            {event.name}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-600">{event.date}</td>
-                                    <td className="px-6 py-4 text-slate-600">{event.location}</td>
-                                    <td className="px-6 py-4 font-medium text-slate-900">{event.qrs}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${event.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
-                                            event.status === 'Upcoming' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-slate-100 text-slate-600'
-                                            }`}>
-                                            {event.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Manage QRs">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                                            </button>
-                                            <button className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Event">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            </button>
-                                            <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </div>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-8 text-center">
+                                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                                        <p className="mt-2 text-slate-500">Chargement des événements...</p>
                                     </td>
                                 </tr>
-                            ))}
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-8 text-center text-red-500 font-medium">
+                                        {error}
+                                    </td>
+                                </tr>
+                            ) : events.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center">
+                                        <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-900">Aucun événement</h3>
+                                        <p className="text-slate-500 mt-1 max-w-sm mx-auto">Vous n'avez pas encore créé de lieu ou d'événement. Cliquez sur "Create Event" pour commencer.</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                events.map((event) => (
+                                    <tr key={event.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-6 py-4 font-medium text-slate-900">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                </div>
+                                                {event.name}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600">{event.date}</td>
+                                        <td className="px-6 py-4 text-slate-600">{event.location}</td>
+                                        <td className="px-6 py-4 font-medium text-slate-900">{event.qrs}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${event.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
+                                                event.status === 'Upcoming' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                {event.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Manage QRs">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                                </button>
+                                                <button className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Event">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                </button>
+                                                <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

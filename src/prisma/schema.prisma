@@ -74,15 +74,17 @@ model Organization {
 
   users             User[]
   events            Event[]
+  areas             Area[]
 }
 
 model Event {
   id          Int      @id @default(autoincrement())
   title       String
   description String?
+  location    String?
   start_date  DateTime
   end_date    DateTime
-  create_at   DateTime @default(now())
+  created_at  DateTime @default(now())
   deleted_at  DateTime?
 
   org_id      Int
@@ -105,6 +107,10 @@ model QrCode {
   deleted_at    DateTime?
   level         Int?
 
+  holder_name   String?
+  holder_email  String?
+  holder_phone  String?
+
   event_id      Int
   event         Event @relation(fields: [event_id], references: [id])
 
@@ -114,8 +120,8 @@ model QrCode {
 model ScanLog {
   id            Int      @id @default(autoincrement())
   scanned_at    DateTime @default(now())
-  location_lat  Float?
-  location_long Float?
+  location_lat  decimal?
+  location_long decimal?
   status        ScanStatus
 
   qr_code_id    Int
@@ -131,6 +137,9 @@ model Area {
   id                   Int    @id @default(autoincrement())
   area_name            String
   accreditation_level  Int
+
+  org_id      Int
+  organization Organization @relation(fields: [org_id], references: [id])
 
   deroulements         Deroulement[]
 }

@@ -1,36 +1,24 @@
-// const { getCategories } = require("../controllers/DBController");
 const express = require('express');
 const router = express.Router();
 const eventController = require('../controllers/api.event.controller');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// Protect all event routes
+router.use(authMiddleware);
 
+// GET /events (Get all events for user's org)
+router.get("/", eventController.getEvents);
 
-// Page event
-router.get("/events", authMiddleware, eventController.renderEvents);
+// GET /events/:eventId (Get specific event details)
+router.get("/:eventId", eventController.getEventById);
 
-//Create event 
-router.post("/createEvent", authMiddleware, eventController.createEvent);
+// POST /events (Create new event)
+router.post("/", eventController.createEvent);
 
-//update event
-router.post("/updateEvent/:eventId", authMiddleware, eventController.updateEvent);
+// PUT /events/:eventId (Update event)
+router.put("/:eventId", eventController.updateEvent);
 
-//delete event
-router.get("/deleteEvent/:eventId", authMiddleware, eventController.deleteEvent);
-
-//delete permananly
-router.post("/deletePermanentlyEvent/:eventId", authMiddleware, eventController.deletePermanentlyEvent);
-
-//restore event
-router.get("/restoreEvent/:eventId", authMiddleware, eventController.restoreEvent);
-
-//trash event
-router.get("/trashEvent", authMiddleware, eventController.renderTrashEvent);
-
-//research trash event
-router.get("/researchTrashEvent", authMiddleware, eventController.researchTrashEvent);
-
-
+// DELETE /events/:eventId (Soft delete)
+router.delete("/:eventId", eventController.deleteEvent);
 
 module.exports = router;
-

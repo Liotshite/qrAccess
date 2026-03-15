@@ -34,15 +34,22 @@ app.use(express.static(path.join(__dirname, "statics")));
 
 
 
-// ===== Routes =====
-const authRoads = require("./routes/user.routes");
-const eventRoads = require("./routes/event.routes");
-const catRoads = require("./routes/category.routes");
+// Importer les différentes routes depuis le dossier src/routes/
+const userRoutes = require("./routes/user.routes");
+const eventRoutes = require("./routes/event.routes");
+const categoryRoutes = require("./routes/category.routes");
+const qrRoutes = require("./routes/qr.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
 
+// ===== Utilisation des routes =====
+// On préfixe toutes les routes utilisateurs par /user (/user/login, /user/signup, etc.)
+app.use("/user", userRoutes);
 
-app.use("/user", authRoads);
-app.use("/event", eventRoads);
-app.use("/cat", catRoads);
+// On préfixe toutes les autres routes (événements, qrcodes...) par leur nom logique
+app.use("/events", eventRoutes);
+app.use("/categories", categoryRoutes);
+app.use("/qr", qrRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 
 module.exports = app;

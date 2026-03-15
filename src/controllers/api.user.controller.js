@@ -201,10 +201,19 @@ exports.verifyEmail = async (req, res) => {
 
 exports.viewprofile = async (req, res) => {
     try {
-        const user = req.user;
+        const userId = req.user.id;
+        const fullUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, email: true, full_name: true, role: true, org_id: true }
+        });
+
+        if (!fullUser) {
+            return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+        }
+
         return res.status(200).json({
             success: true,
-            user: user
+            user: fullUser
         });
     } catch (err) {
         console.error(err);

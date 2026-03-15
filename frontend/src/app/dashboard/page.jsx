@@ -1,8 +1,80 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 export default function Dashboard() {
+    const [stats, setStats] = useState({
+        activeQrs: 0,
+        totalScans: 0,
+        upcomingEvents: 0,
+        nextEventTitle: "Aucun événement",
+        activeAgents: 0
+    });
+    const [userName, setUserName] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                // Fetch User Profile to get Name
+                const profileRes = await fetch("http://localhost:5000/user/profile", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include"
+                });
+                const profileData = await profileRes.json();
+
+                if (profileData.success && profileData.user) {
+                    const fullName = profileData.user.name || profileData.user.full_name || "Admin";
+                    setUserName(fullName.split(' ')[0]); // Get first name
+                }
+
+                // Fetch Dashboard Stats
+                const statsRes = await fetch("http://localhost:5000/dashboard/stats", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include"
+                });
+                const statsData = await statsRes.json();
+
+                if (statsData.success) {
+                    setStats(statsData.data);
+                } else {
+                    setError("Impossible de charger les statistiques.");
+                }
+            } catch (err) {
+                console.error("Dashboard Fetch Error:", err);
+                setError("Erreur de connexion au serveur.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex h-[60vh] items-center justify-center">
+                <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex h-[60vh] items-center justify-center">
+                <div className="text-center p-6 bg-red-50 text-red-600 rounded-xl border border-red-200">
+                    <p className="font-semibold text-lg">{error}</p>
+                    <p className="text-sm mt-2">Veuillez vous assurer que vous êtes connecté.</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-7xl mx-auto space-y-8">
             {/* Welcome Banner */}
@@ -11,7 +83,7 @@ export default function Dashboard() {
                 <div className="absolute bottom-0 right-32 w-48 h-48 bg-blue-100/40 rounded-t-full blur-[50px] pointer-events-none" />
 
                 <div className="relative z-10 max-w-2xl">
-                    <h2 className="text-3xl font-bold text-slate-900 mb-2 mt-2">Welcome back, Lionel 👋</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2 mt-2">Welcome back, {userName || "Admin"} 👋</h2>
                     <p className="text-slate-500 text-lg mb-8">Here's what's happening in your organization today.</p>
                     <div className="flex gap-4">
                         <Link href="/dashboard/qrcodes/new" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-sm flex items-center gap-2">
@@ -35,7 +107,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-500">Active QR Codes</p>
-                            <h4 className="text-2xl font-bold text-slate-900">1,248</h4>
+                            <h4 className="text-2xl font-bold text-slate-900">{stats.activeQrs}</h4>
                         </div>
                     </div>
                     <div className="flex items-center text-sm">
@@ -55,7 +127,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-500">Total Scans</p>
-                            <h4 className="text-2xl font-bold text-slate-900">8,495</h4>
+                            <h4 className="text-2xl font-bold text-slate-900">{stats.totalScans}</h4>
                         </div>
                     </div>
                     <div className="flex items-center text-sm">
@@ -75,11 +147,11 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-500">Upcoming Events</p>
-                            <h4 className="text-2xl font-bold text-slate-900">3</h4>
+                            <h4 className="text-2xl font-bold text-slate-900">{stats.upcomingEvents}</h4>
                         </div>
                     </div>
                     <div className="flex items-center text-sm">
-                        <span className="text-slate-500 font-medium">Next: Tech Conference 2026</span>
+                        <span className="text-slate-500 font-medium">Next: {stats.nextEventTitle}</span>
                     </div>
                 </div>
 
@@ -91,7 +163,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-500">Active Agents</p>
-                            <h4 className="text-2xl font-bold text-slate-900">12</h4>
+                            <h4 className="text-2xl font-bold text-slate-900">{stats.activeAgents}</h4>
                         </div>
                     </div>
                     <div className="flex items-center text-sm">
@@ -118,34 +190,32 @@ export default function Dashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y-2 divide-slate-300 text-slate-700 text-sm">
-                            <tr className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-8 py-4 font-medium text-slate-900">VIP-0042</td>
-                                <td className="px-8 py-4">Gala Dinner - Main Entrance</td>
-                                <td className="px-8 py-4">David G.</td>
-                                <td className="px-8 py-4 text-slate-500">2 mins ago</td>
-                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Granted</span></td>
-                            </tr>
-                            <tr className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-8 py-4 font-medium text-slate-900">STD-1092</td>
-                                <td className="px-8 py-4">Tech Conference - Gate C</td>
-                                <td className="px-8 py-4">Sarah T.</td>
-                                <td className="px-8 py-4 text-slate-500">15 mins ago</td>
-                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Denied</span></td>
-                            </tr>
-                            <tr className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-8 py-4 font-medium text-slate-900">VIP-0021</td>
-                                <td className="px-8 py-4">Gala Dinner - VIP Lounge</td>
-                                <td className="px-8 py-4">David G.</td>
-                                <td className="px-8 py-4 text-slate-500">1 hour ago</td>
-                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Granted</span></td>
-                            </tr>
-                            <tr className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-8 py-4 font-medium text-slate-900">STAFF-02</td>
-                                <td className="px-8 py-4">Warehouse - Back Door</td>
-                                <td className="px-8 py-4">Mike R.</td>
-                                <td className="px-8 py-4 text-slate-500">3 hours ago</td>
-                                <td className="px-8 py-4"><span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Granted</span></td>
-                            </tr>
+                            {stats.recentScans && stats.recentScans.length > 0 ? (
+                                stats.recentScans.map((scan) => (
+                                    <tr key={scan.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-8 py-4 font-medium text-slate-900">{scan.code}</td>
+                                        <td className="px-8 py-4">{scan.event}</td>
+                                        <td className="px-8 py-4">{scan.agent}</td>
+                                        <td className="px-8 py-4 text-slate-500">
+                                            {new Date(scan.time).toLocaleDateString()} {new Date(scan.time).toLocaleTimeString()}
+                                        </td>
+                                        <td className="px-8 py-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${scan.status === 'authorized'
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                {scan.status === 'authorized' ? 'Granted' : 'Denied'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="px-8 py-8 text-center text-slate-500 border-none">
+                                        Aucun scan récent enregistré.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

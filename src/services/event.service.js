@@ -1,52 +1,60 @@
 const prisma = require("../prisma/client");
-// Find by the name 
-exports.findByName = async (eventname) => {
+
+// Find by the name (Filtered by Org)
+exports.findByTitle = async (orgId, titleSearch) => {
   return await prisma.event.findMany({
     where: {
+      org_id: orgId,
       OR: [
-        { eventname: eventname },
-        { category: eventname },
-        { description: eventname }
+        { title: { contains: titleSearch, mode: 'insensitive' } },
+        { location: { contains: titleSearch, mode: 'insensitive' } },
+        { description: { contains: titleSearch, mode: 'insensitive' } }
       ],
-      deletedAt: null
+      deleted_at: null
+    },
+    include: {
+      _count: {
+        select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
+      }
+    },
+    orderBy: { start_date: 'asc' }
+  });
+};
+
+// Find by id (Filtered by Org)
+exports.findById = async (orgId, eventId) => {
+  return await prisma.event.findFirst({
+    where: { id: eventId, org_id: orgId, deleted_at: null },
+    include: {
+      _count: {
+        select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
+      }
     }
   });
 };
 
-
-// Find by the name Trash
-exports.findByNameTrash = async (eventname) => {
+// Find all events (Filtered by Org)
+exports.findAll = async (orgId) => {
   return await prisma.event.findMany({
     where: {
-      OR: [
-        { eventname: eventname },
-        { category: eventname },
-        { description: eventname }
-      ],
-      deletedAt: { not: null }
-    }
+      org_id: orgId,
+      deleted_at: null
+    },
+    include: {
+      _count: {
+        select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
+      }
+    },
+    orderBy: { start_date: 'asc' }
   });
 };
 
-// Find by id
-exports.findById = async (eventId) => {
-  return await prisma.event.findUnique({
-    where: { id: eventId }
-  });
+// Create event (Bound to Org)
+exports.createEvent = async (data) => {
+  return await prisma.event.create({ data });
 };
 
-
-// Find all events
-exports.findAll = async () => {
-  return await prisma.event.findMany({
-    where: {
-      deletedAt: null
-    }
-  });
-};
-
-
-//update event
+// Update event (Assumes ownership verified by controller)
 exports.updateEvent = async (eventId, data) => {
   return prisma.event.update({
     where: { id: eventId },
@@ -54,70 +62,13 @@ exports.updateEvent = async (eventId, data) => {
   });
 };
 
-
-// Create event
-exports.createEvent = async (data) => {
-  return await prisma.event.create({ data });
-};
-
-
-//count event in bdd
-exports.countEvents = async () => {
-  return prisma.event.count(
-    {
-      where: {
-        deletedAt: null
-      }
-    }
-  );
-};
-
-
-//count event in trash bdd 
-exports.countEventsTrash = async () => {
-  return prisma.event.count(
-    {
-      where: {
-        deletedAt: { not: null }
-      }
-    }
-  );
-};
-
-
-//delete event
+// Delete event (Soft delete)
 exports.deleteEvent = async (eventId) => {
   return prisma.event.update({
     where: { id: eventId },
     data: {
-      deletedAt: new Date()
+      deleted_at: new Date()
     }
-  });
-};
-
-//finf all deleted 
-exports.findAllDeleted = async () => {
-  return await prisma.event.findMany({
-    where: {
-      deletedAt: { not: null }
-    }
-  });
-};
-
-//restore event
-exports.restoreEvent = async (eventId) => {
-  return prisma.event.update({
-    where: { id: eventId },
-    data: {
-      deletedAt: null
-    }
-  });
-};
-
-//delete permanently event
-exports.deletePermanentlyEvent = async (eventId) => {
-  return prisma.event.delete({
-    where: { id: eventId }
   });
 };
 

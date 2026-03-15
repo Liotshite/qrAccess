@@ -1,41 +1,81 @@
 const QRCode = require("qrcode");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const eventService = require('../services/event.service');
 const qrService = require('../services/qr.service');
 
 // Générer un QR Code
 exports.generateQrForEvent = async (req, res) => {
     try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+
+        const orgId = req.user.org_id;
         const eventId = Number(req.params.eventId);
-        const event = await eventService.findById(eventId);
+        const { fullName, email, phone, accessType, limit, validFrom, validUntil } = req.body;
+
+        if (!fullName || !accessType) {
+            return res.status(400).json({ success: false, message: "Nom complet et Type d'accès requis" });
+        }
+
+        // Verify that the event belongs to this user's organization
+        const event = await eventService.findById(orgId, eventId);
         if (!event) {
-            return res.status(404).json({ success: false, message: 'Événement non trouvé' });
+            return res.status(404).json({ success: false, message: 'Événement non trouvé ou accès refusé' });
         }
 
-        // Les données encodées dans le QR Code (peut être un lien vers l'app mobile, ou un ID)
-        const qrData = JSON.stringify({ eventId: event.id, eventName: event.eventname });
+        // Generate a cryptographically secure token
+        const uniqueToken = crypto.randomUUID();
 
-        // Le dossier public/qrcodes doit exister !
-        const qrFilename = `event_${event.id}.png`;
-        const qrPath = path.join(__dirname, '../../statics/qrcodes', qrFilename); // Ajustez "statics" selon votre structure
+        // Define limits based on accessType
+        let usageLimit = 1;
+        if (accessType === 'multi') usageLimit = Number(limit) || 2;
+        if (accessType === 'unlimited') usageLimit = 999999;
 
-        // Créer le dossier s'il n'existe pas
+        // Save the QR Code configuration to Prisma
+        const qrRecord = await qrService.createQr({
+            information: `${fullName} - ${event.title}`,
+            unique_token: uniqueToken,
+            status: "active",
+            usage_limit: usageLimit,
+            valid_from: validFrom ? new Date(validFrom) : null,
+            valid_until: validUntil ? new Date(validUntil) : null,
+            holder_name: fullName,
+            holder_email: email || null,
+            holder_phone: phone || null,
+            event_id: event.id
+        });
+
+        // The secure data payload placed inside the physical QR image
+        const qrData = JSON.stringify({
+            t: uniqueToken,      // The secure token representing this pass
+            e: event.id          // The event it's targeting
+        });
+
+        const qrFilename = `qr_${uniqueToken}.png`;
+        const qrPath = path.join(__dirname, '../../statics/qrcodes', qrFilename);
+
+        // Ensure the directory exists
         const dir = path.dirname(qrPath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-        // Génération du fichier QR Code physique
-        await QRCode.toFile(qrPath, qrData);
+        // Physically generate the PNG
+        await QRCode.toFile(qrPath, qrData, {
+            errorCorrectionLevel: 'H',
+            margin: 2,
+            width: 400
+        });
 
-        // On renvoie l'URL (relative) permettant d'accéder à l'image du QR Code
-        // Depuis React Native, on pourra l'afficher avec <Image source={{ uri: "http://votre-ip:3000/qrcodes/event_1.png" }} />
-        return res.status(200).json({
+        const qrUrl = `/qrcodes/${qrFilename}`;
+
+        return res.status(201).json({
             success: true,
-            message: 'QR Code généré avec succès',
-            qrUrl: `/qrcodes/${qrFilename}`,
-            event: { id: event.id, name: event.eventname }
+            message: 'QR Code généré et sauvegardé avec succès',
+            qrUrl: qrUrl,
+            qrCode: qrRecord,
+            event: { id: event.id, title: event.title }
         });
 
     } catch (error) {
@@ -44,13 +84,37 @@ exports.generateQrForEvent = async (req, res) => {
     }
 };
 
-
-
-// Lire la liste de tous les QRs
+// Obtenir tous les QR Codes de l'organisation
 exports.getAllQrs = async (req, res) => {
-    // try {
-    //     const qrs = await qrService.findAll();
-    //     res.status(200).json({ success: true, qrs });
-    // } catch(error) { ... }
-    return res.status(200).json({ success: true, message: "Endpoint pour récupérer les QR codes" });
+    try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+
+        const qrs = await qrService.getAllQrsForOrg(req.user.org_id);
+
+        // Format for frontend
+        const formattedQrs = qrs.map(qr => {
+            const now = new Date();
+            let state = qr.status;
+            if (qr.valid_until && new Date(qr.valid_until) < now) state = 'expired';
+            if (qr.scans_count >= qr.usage_limit) state = 'exhausted';
+
+            return {
+                id: qr.id,
+                holder: qr.holder_name || "Inconnu",
+                email: qr.holder_email || "-",
+                event: qr.event?.title || "-",
+                status: state,
+                scans: `${qr.scans_count} / ${qr.usage_limit > 9999 ? '∞' : qr.usage_limit}`,
+                token: qr.unique_token,
+                createdAt: new Date(qr.valid_from || new Date()).toLocaleDateString() // Using valid_from roughly as creation or start
+            };
+        });
+
+        return res.status(200).json({ success: true, qrs: formattedQrs });
+    } catch (error) {
+        console.error("Error fetching QRs:", error);
+        return res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
 };
