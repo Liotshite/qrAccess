@@ -27,7 +27,7 @@ export default function Register() {
 
     // Strict Password Validator matching the backend rules
     const isValidPassword = (password) => {
-        if (password.length < 12) return false;
+        if (password.length < 8) return false;
         if (!/[A-Z]/.test(password)) return false;
         if (!/[a-z]/.test(password)) return false;
         if (!/[0-9]/.test(password)) return false;
@@ -40,7 +40,7 @@ export default function Register() {
         setError("");
 
         if (!isValidPassword(formData.password)) {
-            setError("Le mot de passe doit contenir au moins 12 caractères, incluant des majuscules, des minuscules, des chiffres et des symboles spéciaux (!@#$).");
+            setError("Le mot de passe doit contenir au moins 8 caractères, incluant des majuscules, des minuscules, des chiffres et des symboles spéciaux (!@#$).");
             return;
         }
 
@@ -251,7 +251,7 @@ export default function Register() {
                             </div>
                         </div>
                         <p className="text-xs text-slate-500 -mt-2">
-                            Doit contenir au moins 12 caractères, incluant majuscules, minuscules, nombres et symboles (!@#$).
+                            Must contain at least 8 characters, including uppercase, lowercase, numbers and symbols (!@#$).
                         </p>
 
                         {/* Submit Button */}

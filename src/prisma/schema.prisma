@@ -14,12 +14,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-//////////////////////////////////////////////////
+//////////////////////
 // ENUMS
-//////////////////////////////////////////////////
+//////////////////////
 
-enum UserRole {
+enum Role {
   SUPER_ADMIN
   ORG_ADMIN
   ORG_AGENT
@@ -40,125 +39,126 @@ enum ScanStatus {
   denied_limit_reached
 }
 
-//////////////////////////////////////////////////
-// TABLES
-//////////////////////////////////////////////////
+//////////////////////
+// MODELS
+//////////////////////
 
 model User {
-  id            Int       @id @default(autoincrement())
-  clef          String    @unique
+  user_id            Int        @id @default(autoincrement())
+  clef          String     @unique
   full_name     String
-  email         String    @unique
+  email         String     @unique
   password_hash String
-  role          UserRole
-  is_verified   Boolean   @default(false)
-  verification_token String?
+  role          Role
   deleted_at    DateTime?
-  created_at    DateTime  @default(now())
+  created_at    DateTime   @default(now())
   last_login    DateTime?
 
   org_id        Int?
-  organization  Organization? @relation(fields: [org_id], references: [id])
+  organization  Organization? @relation(fields: [org_id], references: [org_id])
 
   scan_logs     ScanLog[]
+
+  @@map("users")
 }
 
 model Organization {
-  id                Int      @id @default(autoincrement())
-  name              String
-  created_at        DateTime @default(now())
-  deleted_at        DateTime?
+  org_id                  Int       @id @default(autoincrement())
+  name                String
+  created_at          DateTime  @default(now())
+  deleted_at          DateTime?
 
-  subscription_plan Int?
-  plan              Plan? @relation(fields: [subscription_plan], references: [id])
+  subscription_plan   Int?
+  plan                Plan?     @relation(fields: [subscription_plan], references: [plan_id])
 
-  users             User[]
-  events            Event[]
-  areas             Area[]
+  users               User[]
+  events              Event[]
+  areas               Area[]
+
+  @@map("organizations")
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
+  event_id          Int       @id @default(autoincrement())
+  org_id      Int
   title       String
   description String?
-  location    String?
-  start_date  DateTime
-  end_date    DateTime
-  created_at  DateTime @default(now())
+  created_at  DateTime  @default(now())
   deleted_at  DateTime?
 
-  org_id      Int
-  organization Organization @relation(fields: [org_id], references: [id])
+  organization Organization @relation(fields: [org_id], references: [org_id])
+  qr_codes     QrCode[]
+  EventSchedules EventSchedule[]
 
-  qr_codes    QrCode[]
-  deroulements Deroulement[]
-  @@index([org_id])
+  @@map("events")
 }
 
 model QrCode {
-  id            Int      @id @default(autoincrement())
+  qr_id           Int       @id @default(autoincrement())
+  event_id      Int
   information   String?
-  unique_token  String   @unique
+  unique_token  String    @unique
   status        QrStatus
-  usage_limit   Int      @default(1)
-  scans_count   Int      @default(0)
+  usage_limit   Int       @default(1)
+  scans_count   Int       @default(0)
   valid_from    DateTime?
   valid_until   DateTime?
   deleted_at    DateTime?
   level         Int?
 
-  holder_name   String?
-  holder_email  String?
-  holder_phone  String?
-
-  event_id      Int
-  event         Event @relation(fields: [event_id], references: [id])
-
+  event         Event     @relation(fields: [event_id], references: [event_id])
   scan_logs     ScanLog[]
+
+  @@map("qr_codes")
 }
 
 model ScanLog {
-  id            Int      @id @default(autoincrement())
-  scanned_at    DateTime @default(now())
-  location_lat  decimal?
-  location_long decimal?
-  status        ScanStatus
+  id              Int       @id @default(autoincrement())
+  qr_code_id      Int
+  scanned_by_id   Int
+  scanned_at      DateTime  @default(now())
+  location_lat    Decimal?
+  location_long   Decimal?
+  status          ScanStatus
 
-  qr_code_id    Int
-  qr_code       QrCode @relation(fields: [qr_code_id], references: [id])
+  qr_code         QrCode    @relation(fields: [qr_code_id], references: [qr_id])
+  scanned_by      User      @relation(fields: [scanned_by_id], references: [user_id])
 
-  scanned_by_id Int
-  scanned_by    User @relation(fields: [scanned_by_id], references: [id])
-  
-  @@index([qr_code_id])
-  }
+  @@map("scan_logs")
+}
 
 model Area {
-  id                   Int    @id @default(autoincrement())
+  area_id                   Int    @id @default(autoincrement())
+  org_id               Int
   area_name            String
   accreditation_level  Int
 
-  org_id      Int
-  organization Organization @relation(fields: [org_id], references: [id])
+  organization         Organization @relation(fields: [org_id], references: [org_id])
+  EventSchedules         EventSchedule[]
 
-  deroulements         Deroulement[]
+  @@map("area")
 }
 
 model Plan {
-  id       Int    @id @default(autoincrement())
-  title    String
-  cost     Int
-  features Json
+  plan_id        Int    @id @default(autoincrement())
+  title     String
+  cost      Int
+  features  Json
 
   organizations Organization[]
+
+  @@map("plan")
 }
 
-model Deroulement {
-  id       Int @id @default(autoincrement())
+model EventSchedule {
+  id         Int      @id @default(autoincrement())
+  id_event   Int
+  id_area    Int
+  start_date DateTime
+  end_date   DateTime
 
-  id_event Int
-  event    Event @relation(fields: [id_event], references: [id])
+  event      Event    @relation(fields: [id_event], references: [event_id])
+  area       Area     @relation(fields: [id_area], references: [area_id])
 
-  id_area  Int
-  area     Area @relation(fields: [id_area], references: [id])
+  @@map("EventSchedule")
 }

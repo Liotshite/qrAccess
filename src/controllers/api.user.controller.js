@@ -11,8 +11,8 @@ const prisma = require("../prisma/client");
 // Cette fonction garantit que le mot de passe respecte les standards de sécurité
 // pour éviter qu'il soit facilement devinable ou cassé.
 const isValidPassword = (password) => {
-    // Règle 1: Minimum 12 caractères de long
-    if (password.length < 12) return false;
+    // Règle 1: Minimum 8 caractères de long
+    if (password.length < 8) return false;
     // Règle 2: Doit contenir au moins une lettre majuscule
     if (!/[A-Z]/.test(password)) return false;
     // Règle 3: Doit contenir au moins une lettre minuscule
@@ -64,7 +64,7 @@ exports.login = async (req, res) => {
             });
         }
 
-        // --- NOUVEAU: VÉRIFICATION DE L'EMAIL ---
+        // --- VÉRIFICATION DE L'EMAIL ---
         if (!user.is_verified) {
             return res.status(403).json({
                 success: false,
