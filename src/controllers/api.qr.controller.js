@@ -118,3 +118,46 @@ exports.getAllQrs = async (req, res) => {
         return res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 };
+
+// Obtenir tous les QR Codes pour un événement spécifique
+exports.getQrsByEvent = async (req, res) => {
+    try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+        const orgId = req.user.org_id;
+        const eventId = Number(req.params.eventId);
+
+        const event = await eventService.findById(orgId, eventId);
+        if (!event) {
+            return res.status(404).json({ success: false, message: "Événement introuvable" });
+        }
+
+        const qrs = await qrService.getQrsByEventId(orgId, eventId);
+
+        const formattedQrs = qrs.map(qr => {
+            const now = new Date();
+            let state = qr.status;
+            if (qr.valid_until && new Date(qr.valid_until) < now) state = 'expired';
+            if (qr.scans_count >= qr.usage_limit) state = 'exhausted';
+            return {
+                id: qr.id,
+                holder: qr.holder_name || "Inconnu",
+                email: qr.holder_email || "-",
+                phone: qr.holder_phone || "-",
+                status: state,
+                scans: `${qr.scans_count} / ${qr.usage_limit > 9999 ? '∞' : qr.usage_limit}`,
+                scans_count: qr.scans_count,
+                usage_limit: qr.usage_limit,
+                token: qr.unique_token,
+                createdAt: new Date(qr.valid_from || new Date()).toLocaleDateString()
+            };
+        });
+
+        return res.status(200).json({ success: true, qrs: formattedQrs });
+    } catch (error) {
+        console.error("Error fetching QRs by event:", error);
+        return res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+};
+

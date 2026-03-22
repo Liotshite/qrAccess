@@ -52,7 +52,7 @@ exports.login = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Email or password incorrect"
+                message: "Aucun compte trouvé pour cette adresse email."
             });
         }
 
@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
         if (!validPassword) {
             return res.status(401).json({
                 success: false,
-                message: "Email or password incorrect"
+                message: "Mot de passe incorrect. Veuillez réessayer."
             });
         }
 
@@ -181,7 +181,7 @@ exports.verifyEmail = async (req, res) => {
 
         // Valider l'utilisateur
         await prisma.user.update({
-            where: { id: user.id },
+            where: { user_id: user.user_id },
             data: {
                 is_verified: true,
                 verification_token: null // Nettoyer le token une fois utilisé
@@ -201,10 +201,10 @@ exports.verifyEmail = async (req, res) => {
 
 exports.viewprofile = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.user_id;
         const fullUser = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { id: true, email: true, full_name: true, role: true, org_id: true }
+            where: { user_id: userId },
+            select: { user_id: true, email: true, full_name: true, role: true, org_id: true }
         });
 
         if (!fullUser) {
