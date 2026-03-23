@@ -20,6 +20,8 @@ export default function EventDetailPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [areas, setAreas] = useState([]);
+    const [loadingAreas, setLoadingAreas] = useState(true);
 
     // QR Generation Form
     const [qrForm, setQrForm] = useState({
@@ -33,14 +35,35 @@ export default function EventDetailPage() {
 
     // Edit Form
     const [editForm, setEditForm] = useState({
-        title: "", description: "", location: "", startDate: "", endDate: ""
+        title: "", description: "", id_area: "", startDate: "", endDate: ""
     });
     const [updatingEvent, setUpdatingEvent] = useState(false);
     const [editError, setEditError] = useState("");
 
     useEffect(() => {
-        if (eventId) fetchAll();
+        if (eventId) {
+            fetchAll();
+            fetchAreas();
+        }
     }, [eventId]);
+
+    const fetchAreas = async () => {
+        try {
+            const res = await fetch("http://localhost:5000/areas", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAreas(data.areas || []);
+            }
+        } catch (err) {
+            console.error("Error fetching areas:", err);
+        } finally {
+            setLoadingAreas(false);
+        }
+    };
 
     const fetchAll = async () => {
         setLoading(true);
@@ -54,13 +77,15 @@ export default function EventDetailPage() {
             const qrData = await qrRes.json();
 
             if (eventData.success) {
-                setEvent(eventData.event);
+                const evt = eventData.event;
+                const schedule = evt.EventSchedules?.[0];
+                setEvent(evt);
                 setEditForm({
-                    title: eventData.event.title,
-                    description: eventData.event.description || "",
-                    location: eventData.event.location || "",
-                    startDate: new Date(eventData.event.start_date).toISOString().slice(0, 16),
-                    endDate: new Date(eventData.event.end_date).toISOString().slice(0, 16)
+                    title: evt.title,
+                    description: evt.description || "",
+                    id_area: schedule?.id_area || "",
+                    startDate: schedule ? new Date(schedule.start_date).toISOString().slice(0, 16) : "",
+                    endDate: schedule ? new Date(schedule.end_date).toISOString().slice(0, 16) : ""
                 });
             } else {
                 setError("Événement introuvable.");
@@ -157,10 +182,12 @@ export default function EventDetailPage() {
     };
 
     const getEventStatus = () => {
-        if (!event) return { label: "—", style: "bg-slate-100 text-slate-600" };
+        if (!event || !event.EventSchedules || event.EventSchedules.length === 0) return { label: "—", style: "bg-slate-100 text-slate-600" };
         const now = new Date();
-        if (new Date(event.start_date) > now) return { label: "Upcoming", style: "bg-blue-100 text-blue-700" };
-        if (new Date(event.end_date) < now) return { label: "Past", style: "bg-slate-100 text-slate-600" };
+        const first = event.EventSchedules[0];
+        const last = event.EventSchedules[event.EventSchedules.length - 1];
+        if (new Date(first.start_date) > now) return { label: "Upcoming", style: "bg-blue-100 text-blue-700" };
+        if (new Date(last.end_date) < now) return { label: "Past", style: "bg-slate-100 text-slate-600" };
         return { label: "Active", style: "bg-emerald-100 text-emerald-700" };
     };
 
@@ -228,14 +255,14 @@ export default function EventDetailPage() {
                             <div className="flex items-center gap-2 text-slate-600">
                                 <Calendar className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                 <span className="text-sm font-medium">
-                                    {new Date(event.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    {event.EventSchedules?.[0] ? new Date(event.EventSchedules[0].start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                                     {' → '}
-                                    {new Date(event.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    {event.EventSchedules?.[event.EventSchedules.length - 1] ? new Date(event.EventSchedules[event.EventSchedules.length - 1].end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2 text-slate-600">
                                 <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                <span className="text-sm font-medium">{event.location || "Lieu non défini"}</span>
+                                <span className="text-sm font-medium">{event.EventSchedules?.[0]?.area?.area_name || "Lieu non défini"}</span>
                             </div>
                             <div className="flex items-center gap-2 text-slate-600">
                                 <QrCode className="w-4 h-4 text-blue-500 flex-shrink-0" />
@@ -505,13 +532,25 @@ export default function EventDetailPage() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lieu</label>
-                                <input
-                                    type="text"
-                                    value={editForm.location}
-                                    onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Zone / Area *</label>
+                                <select
+                                    required
+                                    value={editForm.id_area}
+                                    onChange={(e) => setEditForm({ ...editForm, id_area: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
-                                />
+                                >
+                                    {loadingAreas ? (
+                                        <option>Chargement des zones...</option>
+                                    ) : areas.length === 0 ? (
+                                        <option>Aucune zone disponible</option>
+                                    ) : (
+                                        areas.map(area => (
+                                            <option key={area.area_id} value={area.area_id}>
+                                                {area.area_name}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">

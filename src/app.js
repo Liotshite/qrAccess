@@ -39,6 +39,7 @@ const userRoutes = require("./routes/user.routes");
 const eventRoutes = require("./routes/event.routes");
 const qrRoutes = require("./routes/qr.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const areaRoutes = require("./routes/area.routes");
 
 // ===== Utilisation des routes =====
 // On préfixe toutes les routes utilisateurs par /user (/user/login, /user/signup, etc.)
@@ -48,6 +49,7 @@ app.use("/user", userRoutes);
 app.use("/events", eventRoutes);
 app.use("/qr", qrRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/areas", areaRoutes);
 
 
 module.exports = app;

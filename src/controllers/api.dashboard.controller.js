@@ -34,23 +34,34 @@ exports.getOverviewStats = async (req, res) => {
         const upcomingEventsCount = await prisma.event.count({
             where: {
                 org_id: orgId,
-                start_date: { gt: now },
+                EventSchedules: {
+                    some: {
+                        start_date: { gt: now }
+                    }
+                },
                 deleted_at: null
             }
         });
 
         // Fetch the name of the very next event for the subtitle
-        const nextEvent = await prisma.event.findFirst({
+        const nextEventSchedule = await prisma.eventSchedule.findFirst({
             where: {
-                org_id: orgId,
-                start_date: { gt: now },
-                deleted_at: null
+                event: {
+                    org_id: orgId,
+                    deleted_at: null
+                },
+                start_date: { gt: now }
             },
             orderBy: {
                 start_date: 'asc'
             },
-            select: { title: true }
+            include: {
+                event: {
+                    select: { title: true }
+                }
+            }
         });
+        const nextEvent = nextEventSchedule ? nextEventSchedule.event : null;
 
         // 4. Active Agents (ORG_AGENT or OPERATOR)
         const activeAgentsCount = await prisma.userQ.count({

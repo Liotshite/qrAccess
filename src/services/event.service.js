@@ -13,11 +13,15 @@ exports.findByTitle = async (orgId, titleSearch) => {
       deleted_at: null
     },
     include: {
+      EventSchedules: {
+        include: { area: true },
+        orderBy: { start_date: 'asc' }
+      },
       _count: {
         select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
       }
     },
-    orderBy: { start_date: 'asc' }
+    orderBy: { created_at: 'desc' }
   });
 };
 
@@ -26,6 +30,10 @@ exports.findById = async (orgId, eventId) => {
   return await prisma.event.findFirst({
     where: { event_id: eventId, org_id: orgId, deleted_at: null },
     include: {
+      EventSchedules: {
+        include: { area: true },
+        orderBy: { start_date: 'asc' }
+      },
       _count: {
         select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
       }
@@ -41,24 +49,65 @@ exports.findAll = async (orgId) => {
       deleted_at: null
     },
     include: {
+      EventSchedules: {
+        include: { area: true },
+        orderBy: { start_date: 'asc' }
+      },
       _count: {
         select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
       }
     },
-    orderBy: { start_date: 'asc' }
+    orderBy: { created_at: 'desc' }
   });
 };
 
 // Create event (Bound to Org)
 exports.createEvent = async (data) => {
-  return await prisma.event.create({ data });
+  const { start_date, end_date, id_area, ...eventData } = data;
+
+  return await prisma.event.create({
+    data: {
+      ...eventData,
+      EventSchedules: {
+        create: {
+          start_date: start_date,
+          end_date: end_date,
+          id_area: id_area || 1 // Fallback to 1 if not provided
+        }
+      }
+    },
+    include: { EventSchedules: true }
+  });
 };
 
 // Update event (Assumes ownership verified by controller)
 exports.updateEvent = async (eventId, data) => {
+  const { start_date, end_date, id_area, ...eventData } = data;
+
+  const updateData = { ...eventData };
+
+  if (start_date || end_date || id_area) {
+    const firstSchedule = await prisma.eventSchedule.findFirst({
+      where: { id_event: eventId },
+      orderBy: { start_date: 'asc' }
+    });
+
+    if (firstSchedule) {
+      await prisma.eventSchedule.update({
+        where: { id: firstSchedule.id },
+        data: {
+          start_date: start_date || undefined,
+          end_date: end_date || undefined,
+          id_area: id_area ? Number(id_area) : undefined
+        }
+      });
+    }
+  }
+
   return prisma.event.update({
     where: { event_id: eventId },
-    data
+    data: updateData,
+    include: { EventSchedules: true }
   });
 };
 

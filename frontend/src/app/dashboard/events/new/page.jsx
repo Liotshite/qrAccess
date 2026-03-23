@@ -3,19 +3,45 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, useEffect } from "react";
 
 export default function NewEventPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        location: "",
+        id_area: "",
         startDate: "",
         endDate: ""
     });
+    const [areas, setAreas] = useState([]);
+    const [loadingAreas, setLoadingAreas] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchAreas = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/areas", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include"
+                });
+                const data = await res.json();
+                if (data.success) {
+                    setAreas(data.areas || []);
+                    if (data.areas && data.areas.length > 0) {
+                        setFormData(prev => ({ ...prev, id_area: data.areas[0].area_id }));
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching areas:", err);
+            } finally {
+                setLoadingAreas(false);
+            }
+        };
+        fetchAreas();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -137,7 +163,7 @@ export default function NewEventPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Physical Address / Location</label>
+                        <label className="text-sm font-medium text-slate-700">Area / Local *</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -145,14 +171,25 @@ export default function NewEventPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <input
-                                type="text"
-                                name="location"
-                                value={formData.location}
+                            <select
+                                name="id_area"
+                                value={formData.id_area}
                                 onChange={handleChange}
-                                placeholder="123 Main St, City, Country"
+                                required
                                 className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                            />
+                            >
+                                {loadingAreas ? (
+                                    <option>Chargement des zones...</option>
+                                ) : areas.length === 0 ? (
+                                    <option>Aucune zone disponible - Veuillez en créer une</option>
+                                ) : (
+                                    areas.map(area => (
+                                        <option key={area.area_id} value={area.area_id}>
+                                            {area.area_name} (Accréditation {area.accreditation_level})
+                                        </option>
+                                    ))
+                                )}
+                            </select>
                         </div>
                     </div>
                 </div>

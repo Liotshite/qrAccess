@@ -20,15 +20,22 @@ exports.getEvents = async (req, res) => {
         // Format for frontend
         const formattedEvents = events.map(e => {
             const now = new Date();
+            const schedules = e.EventSchedules || [];
+            const firstSchedule = schedules[0];
+            const lastSchedule = schedules[schedules.length - 1];
+
             let status = "Active";
-            if (new Date(e.start_date) > now) status = "Upcoming";
-            if (new Date(e.end_date) < now) status = "Past";
+            if (firstSchedule && new Date(firstSchedule.start_date) > now) status = "Upcoming";
+            if (lastSchedule && new Date(lastSchedule.end_date) < now) status = "Past";
+
+            const startDateStr = firstSchedule ? new Date(firstSchedule.start_date).toLocaleDateString() : 'N/A';
+            const endDateStr = lastSchedule ? new Date(lastSchedule.end_date).toLocaleDateString() : 'N/A';
 
             return {
                 id: e.event_id,
                 name: e.title,
-                date: `${new Date(e.start_date).toLocaleDateString()} - ${new Date(e.end_date).toLocaleDateString()}`,
-                location: e.location || "N/A",
+                date: `${startDateStr} - ${endDateStr}`,
+                location: firstSchedule?.area?.area_name || "N/A",
                 qrs: e._count?.qr_codes || 0,
                 status: status
             };
