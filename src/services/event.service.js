@@ -24,7 +24,7 @@ exports.findByTitle = async (orgId, titleSearch) => {
 // Find by id (Filtered by Org)
 exports.findById = async (orgId, eventId) => {
   return await prisma.event.findFirst({
-    where: { id: eventId, org_id: orgId, deleted_at: null },
+    where: { event_id: eventId, org_id: orgId, deleted_at: null },
     include: {
       _count: {
         select: { qr_codes: { where: { status: 'active', deleted_at: null } } }
@@ -57,7 +57,7 @@ exports.createEvent = async (data) => {
 // Update event (Assumes ownership verified by controller)
 exports.updateEvent = async (eventId, data) => {
   return prisma.event.update({
-    where: { id: eventId },
+    where: { event_id: eventId },
     data
   });
 };
@@ -65,7 +65,7 @@ exports.updateEvent = async (eventId, data) => {
 // Delete event (Soft delete)
 exports.deleteEvent = async (eventId) => {
   return prisma.event.update({
-    where: { id: eventId },
+    where: { event_id: eventId },
     data: {
       deleted_at: new Date()
     }

@@ -1,7 +1,7 @@
 const prisma = require("../prisma/client");
 
 exports.findByEmail = (email) => {
-  return prisma.user.findUnique({
+  return prisma.userQ.findFirst({
     where: { email: email }
   });
 };
@@ -13,10 +13,10 @@ exports.createOrgAndAdminUser = async (orgData, userData) => {
       data: orgData
     });
 
-    const user = await tx.user.create({
+    const user = await tx.userQ.create({
       data: {
         ...userData,
-        org_id: org.id
+        org_id: org.org_id
       }
     });
 

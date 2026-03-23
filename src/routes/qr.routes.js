@@ -7,11 +7,10 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.get("/qrs", authMiddleware, qrController.getAllQrs);
 
 // Récupération des QR codes d'un événement spécifique
-router.get("/event/:eventId", authMiddleware, qrController.getQrsByEvent);
+router.get("/event/:event_id", authMiddleware, qrController.getQrsByEvent);
 
 // Générer un QR code pour un événement spécifique
-// Utilisation (depuis React Native) : POST /qr/generate/123
-router.post("/generate/:eventId", authMiddleware, qrController.generateQrForEvent);
+router.post("/generate/:event_id", authMiddleware, qrController.generateQrForEvent);
 
 
 // Note: Toutes les anciennes routes (/ajoutP, /updateP, /mytransactions) 

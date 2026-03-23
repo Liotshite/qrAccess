@@ -10,15 +10,15 @@ router.use(authMiddleware);
 router.get("/", eventController.getEvents);
 
 // GET /events/:eventId (Get specific event details)
-router.get("/:eventId", eventController.getEventById);
+router.get("/:event_id", eventController.getEventById);
 
 // POST /events (Create new event)
 router.post("/", eventController.createEvent);
 
 // PUT /events/:eventId (Update event)
-router.put("/:eventId", eventController.updateEvent);
+router.put("/:event_id", eventController.updateEvent);
 
 // DELETE /events/:eventId (Soft delete)
-router.delete("/:eventId", eventController.deleteEvent);
+router.delete("/:event_id", eventController.deleteEvent);
 
 module.exports = router;

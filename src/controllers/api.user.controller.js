@@ -42,20 +42,16 @@ const cookieOptions = {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-
         if (!email || !password) {
             return res.status(400).json({ success: false, message: "Email and password are required" });
         }
-
         const user = await userService.findByEmail(email);
-
         if (!user) {
             return res.status(401).json({
                 success: false,
                 message: "Aucun compte trouvé pour cette adresse email."
             });
         }
-
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) {
             return res.status(401).json({
@@ -73,7 +69,7 @@ exports.login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role, org_id: user.org_id },
+            { user_id: user.user_id, email: user.email, role: user.role, org_id: user.org_id },
             process.env.JWT_SECRET || "fallback_secret",
             { expiresIn: "100d" }
         );
@@ -86,7 +82,7 @@ exports.login = async (req, res) => {
             message: "Connexion réussie",
             token: token, // Optionally keep this for mobile apps, but NextJS should rely on the cookie
             user: {
-                id: user.id,
+                user_id: user.user_id,
                 name: user.full_name,
                 email: user.email,
                 role: user.role
@@ -171,7 +167,7 @@ exports.verifyEmail = async (req, res) => {
         }
 
         // Trouver l'utilisateur par son token de vérification
-        const user = await prisma.user.findFirst({
+        const user = await prisma.userQ.findFirst({
             where: { verification_token: token }
         });
 
@@ -180,7 +176,7 @@ exports.verifyEmail = async (req, res) => {
         }
 
         // Valider l'utilisateur
-        await prisma.user.update({
+        await prisma.userQ.update({
             where: { user_id: user.user_id },
             data: {
                 is_verified: true,
@@ -202,7 +198,7 @@ exports.verifyEmail = async (req, res) => {
 exports.viewprofile = async (req, res) => {
     try {
         const userId = req.user.user_id;
-        const fullUser = await prisma.user.findUnique({
+        const fullUser = await prisma.userQ.findUnique({
             where: { user_id: userId },
             select: { user_id: true, email: true, full_name: true, role: true, org_id: true }
         });

@@ -25,7 +25,7 @@ exports.getEvents = async (req, res) => {
             if (new Date(e.end_date) < now) status = "Past";
 
             return {
-                id: e.id,
+                id: e.event_id,
                 name: e.title,
                 date: `${new Date(e.start_date).toLocaleDateString()} - ${new Date(e.end_date).toLocaleDateString()}`,
                 location: e.location || "N/A",
@@ -49,7 +49,7 @@ exports.getEventById = async (req, res) => {
         }
 
         const orgId = req.user.org_id;
-        const eventId = Number(req.params.eventId);
+        const eventId = Number(req.params.event_id);
 
         const event = await eventService.findById(orgId, eventId);
         if (!event) {
@@ -102,7 +102,7 @@ exports.updateEvent = async (req, res) => {
         }
 
         const orgId = req.user.org_id;
-        const eventId = Number(req.params.eventId);
+        const eventId = Number(req.params.event_id);
         const { title, description, location, startDate, endDate } = req.body;
 
         // Verify ownership first
@@ -134,7 +134,7 @@ exports.deleteEvent = async (req, res) => {
         }
 
         const orgId = req.user.org_id;
-        const eventId = Number(req.params.eventId);
+        const eventId = Number(req.params.event_id);
 
         // Verify ownership
         const existingEvent = await eventService.findById(orgId, eventId);

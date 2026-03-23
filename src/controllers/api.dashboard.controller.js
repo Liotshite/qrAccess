@@ -53,7 +53,7 @@ exports.getOverviewStats = async (req, res) => {
         });
 
         // 4. Active Agents (ORG_AGENT or OPERATOR)
-        const activeAgentsCount = await prisma.user.count({
+        const activeAgentsCount = await prisma.userQ.count({
             where: {
                 org_id: orgId,
                 role: { in: ['ORG_AGENT', 'OPERATOR'] },

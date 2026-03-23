@@ -37,7 +37,6 @@ app.use(express.static(path.join(__dirname, "statics")));
 // Importer les différentes routes depuis le dossier src/routes/
 const userRoutes = require("./routes/user.routes");
 const eventRoutes = require("./routes/event.routes");
-const categoryRoutes = require("./routes/category.routes");
 const qrRoutes = require("./routes/qr.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 
@@ -47,7 +46,6 @@ app.use("/user", userRoutes);
 
 // On préfixe toutes les autres routes (événements, qrcodes...) par leur nom logique
 app.use("/events", eventRoutes);
-app.use("/categories", categoryRoutes);
 app.use("/qr", qrRoutes);
 app.use("/dashboard", dashboardRoutes);
 

@@ -13,7 +13,7 @@ exports.generateQrForEvent = async (req, res) => {
         }
 
         const orgId = req.user.org_id;
-        const eventId = Number(req.params.eventId);
+        const eventId = Number(req.params.event_id);
         const { fullName, email, phone, accessType, limit, validFrom, validUntil } = req.body;
 
         if (!fullName || !accessType) {
@@ -45,13 +45,13 @@ exports.generateQrForEvent = async (req, res) => {
             holder_name: fullName,
             holder_email: email || null,
             holder_phone: phone || null,
-            event_id: event.id
+            event_id: event.event_id
         });
 
         // The secure data payload placed inside the physical QR image
         const qrData = JSON.stringify({
             t: uniqueToken,      // The secure token representing this pass
-            e: event.id          // The event it's targeting
+            e: event.event_id          // The event it's targeting
         });
 
         const qrFilename = `qr_${uniqueToken}.png`;
@@ -75,7 +75,7 @@ exports.generateQrForEvent = async (req, res) => {
             message: 'QR Code généré et sauvegardé avec succès',
             qrUrl: qrUrl,
             qrCode: qrRecord,
-            event: { id: event.id, title: event.title }
+            event: { id: event.event_id, title: event.title }
         });
 
     } catch (error) {
@@ -101,7 +101,7 @@ exports.getAllQrs = async (req, res) => {
             if (qr.scans_count >= qr.usage_limit) state = 'exhausted';
 
             return {
-                id: qr.id,
+                id: qr.qr_id,
                 holder: qr.holder_name || "Inconnu",
                 email: qr.holder_email || "-",
                 event: qr.event?.title || "-",
@@ -126,7 +126,7 @@ exports.getQrsByEvent = async (req, res) => {
             return res.status(401).json({ success: false, message: "Non autorisé" });
         }
         const orgId = req.user.org_id;
-        const eventId = Number(req.params.eventId);
+        const eventId = Number(req.params.event_id);
 
         const event = await eventService.findById(orgId, eventId);
         if (!event) {
@@ -141,7 +141,7 @@ exports.getQrsByEvent = async (req, res) => {
             if (qr.valid_until && new Date(qr.valid_until) < now) state = 'expired';
             if (qr.scans_count >= qr.usage_limit) state = 'exhausted';
             return {
-                id: qr.id,
+                id: qr.qr_id,
                 holder: qr.holder_name || "Inconnu",
                 email: qr.holder_email || "-",
                 phone: qr.holder_phone || "-",

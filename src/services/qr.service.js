@@ -11,7 +11,7 @@ exports.getQrsByEventId = async (orgId, eventId) => {
         include: {
             event: { select: { title: true } }
         },
-        orderBy: { id: 'desc' }
+        orderBy: { qr_id: 'desc' }
     });
 };
 
@@ -30,7 +30,7 @@ exports.getAllQrsForOrg = async (orgId) => {
             }
         },
         orderBy: {
-            id: 'desc'
+            qr_id: 'desc'
         }
     });
 };
@@ -38,7 +38,7 @@ exports.getAllQrsForOrg = async (orgId) => {
 // Find a specific QR Code
 exports.getQrById = async (id) => {
     return await prisma.qrCode.findUnique({
-        where: { id: id },
+        where: { qr_id: id },
     });
 };
 
@@ -52,7 +52,7 @@ exports.createQr = async (data) => {
 // Update an existing QR Code
 exports.updateQr = async (id, data) => {
     return await prisma.qrCode.update({
-        where: { id: id },
+        where: { qr_id: id },
         data,
     });
 };
@@ -60,7 +60,7 @@ exports.updateQr = async (id, data) => {
 // Soft Delete a QR Code
 exports.deleteQr = async (id) => {
     return await prisma.qrCode.update({
-        where: { id: id },
+        where: { qr_id: id },
         data: { deleted_at: new Date() }
     });
 };
