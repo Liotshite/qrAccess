@@ -63,17 +63,19 @@ exports.findAll = async (orgId) => {
 
 // Create event (Bound to Org)
 exports.createEvent = async (data) => {
-  const { start_date, end_date, id_area, ...eventData } = data;
+  const { start_date, end_date, id_area, areaIds, ...eventData } = data;
+
+  const idsToCreate = areaIds && Array.isArray(areaIds) ? areaIds : (id_area ? [Number(id_area)] : [1]);
 
   return await prisma.event.create({
     data: {
       ...eventData,
       EventSchedules: {
-        create: {
+        create: idsToCreate.map(id => ({
           start_date: start_date,
           end_date: end_date,
-          id_area: id_area || 1 // Fallback to 1 if not provided
-        }
+          id_area: Number(id)
+        }))
       }
     },
     include: { EventSchedules: true }
@@ -82,25 +84,39 @@ exports.createEvent = async (data) => {
 
 // Update event (Assumes ownership verified by controller)
 exports.updateEvent = async (eventId, data) => {
-  const { start_date, end_date, id_area, ...eventData } = data;
+  const { start_date, end_date, id_area, areaIds, ...eventData } = data;
 
   const updateData = { ...eventData };
 
-  if (start_date || end_date || id_area) {
-    const firstSchedule = await prisma.eventSchedule.findFirst({
-      where: { id_event: eventId },
-      orderBy: { start_date: 'asc' }
-    });
+  if (start_date || end_date || id_area || areaIds) {
+    // If no explicit areaIds but we have id_area, use it
+    const finalAreaIds = areaIds && Array.isArray(areaIds) 
+        ? areaIds.map(Number) 
+        : (id_area ? [Number(id_area)] : null);
 
-    if (firstSchedule) {
-      await prisma.eventSchedule.update({
-        where: { id: firstSchedule.id },
-        data: {
-          start_date: start_date || undefined,
-          end_date: end_date || undefined,
-          id_area: id_area ? Number(id_area) : undefined
-        }
+    if (finalAreaIds) {
+      // Simplest way to sync: delete all and recreate
+      await prisma.eventSchedule.deleteMany({
+        where: { id_event: eventId }
       });
+
+      await prisma.eventSchedule.createMany({
+        data: finalAreaIds.map(id => ({
+          id_event: eventId,
+          id_area: id,
+          start_date: start_date ? new Date(start_date) : new Date(),
+          end_date: end_date ? new Date(end_date) : new Date()
+        }))
+      });
+    } else if (start_date || end_date) {
+        // Just update dates for all existing schedules if areas didn't change
+        await prisma.eventSchedule.updateMany({
+            where: { id_event: eventId },
+            data: {
+                start_date: start_date ? new Date(start_date) : undefined,
+                end_date: end_date ? new Date(end_date) : undefined
+            }
+        });
     }
   }
 

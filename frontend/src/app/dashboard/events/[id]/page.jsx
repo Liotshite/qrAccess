@@ -35,7 +35,7 @@ export default function EventDetailPage() {
 
     // Edit Form
     const [editForm, setEditForm] = useState({
-        title: "", description: "", id_area: "", startDate: "", endDate: ""
+        title: "", description: "", areaIds: [], startDate: "", endDate: ""
     });
     const [updatingEvent, setUpdatingEvent] = useState(false);
     const [editError, setEditError] = useState("");
@@ -78,14 +78,15 @@ export default function EventDetailPage() {
 
             if (eventData.success) {
                 const evt = eventData.event;
-                const schedule = evt.EventSchedules?.[0];
+                const schedules = evt.EventSchedules || [];
+                const firstSchedule = schedules[0];
                 setEvent(evt);
                 setEditForm({
                     title: evt.title,
                     description: evt.description || "",
-                    id_area: schedule?.id_area || "",
-                    startDate: schedule ? new Date(schedule.start_date).toISOString().slice(0, 16) : "",
-                    endDate: schedule ? new Date(schedule.end_date).toISOString().slice(0, 16) : ""
+                    areaIds: schedules.map(s => s.id_area),
+                    startDate: firstSchedule ? new Date(firstSchedule.start_date).toISOString().slice(0, 16) : "",
+                    endDate: firstSchedule ? new Date(firstSchedule.end_date).toISOString().slice(0, 16) : ""
                 });
             } else {
                 setError("Événement introuvable.");
@@ -96,6 +97,17 @@ export default function EventDetailPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAreaChange = (areaId) => {
+        setEditForm(prev => {
+            const currentIds = prev.areaIds;
+            if (currentIds.includes(areaId)) {
+                return { ...prev, areaIds: currentIds.filter(id => id !== areaId) };
+            } else {
+                return { ...prev, areaIds: [...currentIds, areaId] };
+            }
+        });
     };
 
     const handleUpdateEvent = async (e) => {
@@ -262,7 +274,11 @@ export default function EventDetailPage() {
                             </div>
                             <div className="flex items-center gap-2 text-slate-600">
                                 <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                <span className="text-sm font-medium">{event.EventSchedules?.[0]?.area?.area_name || "Lieu non défini"}</span>
+                                <span className="text-sm font-medium">
+                                    {event.EventSchedules?.length > 0 
+                                        ? event.EventSchedules.map(s => s.area?.area_name).filter(Boolean).join(", ") 
+                                        : "Lieu non défini"}
+                                </span>
                             </div>
                             <div className="flex items-center gap-2 text-slate-600">
                                 <QrCode className="w-4 h-4 text-blue-500 flex-shrink-0" />
@@ -531,26 +547,27 @@ export default function EventDetailPage() {
                                     className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
                                 />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Zone / Area *</label>
-                                <select
-                                    required
-                                    value={editForm.id_area}
-                                    onChange={(e) => setEditForm({ ...editForm, id_area: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
-                                >
+                            <div className="space-y-3">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Zones / Areas *</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
                                     {loadingAreas ? (
-                                        <option>Chargement des zones...</option>
+                                        <p className="text-xs text-slate-500 italic">Chargement...</p>
                                     ) : areas.length === 0 ? (
-                                        <option>Aucune zone disponible</option>
+                                        <p className="text-xs text-red-500">Aucune zone disponible</p>
                                     ) : (
                                         areas.map(area => (
-                                            <option key={area.area_id} value={area.area_id}>
-                                                {area.area_name}
-                                            </option>
+                                            <label key={area.area_id} className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${editForm.areaIds.includes(area.area_id) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editForm.areaIds.includes(area.area_id)}
+                                                    onChange={() => handleAreaChange(area.area_id)}
+                                                    className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300"
+                                                />
+                                                <span className="text-xs font-medium truncate">{area.area_name}</span>
+                                            </label>
                                         ))
                                     )}
-                                </select>
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">

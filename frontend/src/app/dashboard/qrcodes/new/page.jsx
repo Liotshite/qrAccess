@@ -170,7 +170,7 @@ export default function NewQRCodePage() {
 
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Target Event / Location *</label>
+                                <label className="text-sm font-medium text-slate-700">Target Event </label>
                                 <select
                                     name="eventId"
                                     value={formData.eventId}

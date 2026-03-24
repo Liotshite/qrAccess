@@ -85,15 +85,7 @@ export default function Dashboard() {
                 <div className="relative z-10 max-w-2xl">
                     <h2 className="text-3xl font-bold text-slate-900 mb-2 mt-2">Welcome back, {userName || "Admin"} 👋</h2>
                     <p className="text-slate-500 text-lg mb-8">Here's what's happening in your organization today.</p>
-                    <div className="flex gap-4">
-                        <Link href="/dashboard/qrcodes/new" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-sm flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                            Generate QR Code
-                        </Link>
-                        <Link href="/dashboard/events/new" className="px-6 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-xl shadow-sm active:scale-95 transition-all text-sm">
-                            Create Event
-                        </Link>
-                    </div>
+
                 </div>
             </div>
 

@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function NewEventPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        id_area: "",
+        areaIds: [],
         startDate: "",
         endDate: ""
     });
@@ -30,9 +30,6 @@ export default function NewEventPage() {
                 const data = await res.json();
                 if (data.success) {
                     setAreas(data.areas || []);
-                    if (data.areas && data.areas.length > 0) {
-                        setFormData(prev => ({ ...prev, id_area: data.areas[0].area_id }));
-                    }
                 }
             } catch (err) {
                 console.error("Error fetching areas:", err);
@@ -47,12 +44,28 @@ export default function NewEventPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleAreaChange = (areaId) => {
+        setFormData(prev => {
+            const currentIds = prev.areaIds;
+            if (currentIds.includes(areaId)) {
+                return { ...prev, areaIds: currentIds.filter(id => id !== areaId) };
+            } else {
+                return { ...prev, areaIds: [...currentIds, areaId] };
+            }
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
         if (!formData.title || !formData.startDate || !formData.endDate) {
             setError("Titre, Date de début et Date de fin sont obligatoires.");
+            return;
+        }
+
+        if (formData.areaIds.length === 0) {
+            setError("Veuillez sélectionner au moins une zone.");
             return;
         }
 
@@ -162,37 +175,33 @@ export default function NewEventPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Area / Local *</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </div>
-                            <select
-                                name="id_area"
-                                value={formData.id_area}
-                                onChange={handleChange}
-                                required
-                                className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                            >
-                                {loadingAreas ? (
-                                    <option>Chargement des zones...</option>
-                                ) : areas.length === 0 ? (
-                                    <option>Aucune zone disponible - Veuillez en créer une</option>
-                                ) : (
-                                    areas.map(area => (
-                                        <option key={area.area_id} value={area.area_id}>
-                                            {area.area_name} (Accréditation {area.accreditation_level})
-                                        </option>
-                                    ))
-                                )}
-                            </select>
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-slate-700">Areas / Zones *</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {loadingAreas ? (
+                                <p className="text-sm text-slate-500 italic">Chargement des zones...</p>
+                            ) : areas.length === 0 ? (
+                                <p className="text-sm text-red-500">Aucune zone disponible - Veuillez en créer une</p>
+                            ) : (
+                                areas.map(area => (
+                                    <label key={area.area_id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${formData.areaIds.includes(area.area_id) ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' : 'bg-slate-50 border-slate-100 hover:border-slate-200 text-slate-600'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.areaIds.includes(area.area_id)}
+                                            onChange={() => handleAreaChange(area.area_id)}
+                                            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold truncate">{area.area_name}</p>
+                                            <p className="text-xs opacity-70">Accréditation {area.accreditation_level}</p>
+                                        </div>
+                                    </label>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
+
 
                 {/* Submit Actions */}
                 <div className="pt-4 flex items-center justify-end gap-4 border-t border-slate-100">

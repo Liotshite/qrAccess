@@ -31,11 +31,14 @@ exports.getEvents = async (req, res) => {
             const startDateStr = firstSchedule ? new Date(firstSchedule.start_date).toLocaleDateString() : 'N/A';
             const endDateStr = lastSchedule ? new Date(lastSchedule.end_date).toLocaleDateString() : 'N/A';
 
+            // List all area names
+            const locationNames = schedules.map(s => s.area?.area_name).filter(Boolean).join(", ") || "N/A";
+
             return {
                 id: e.event_id,
                 name: e.title,
                 date: `${startDateStr} - ${endDateStr}`,
-                location: firstSchedule?.area?.area_name || "N/A",
+                location: locationNames,
                 qrs: e._count?.qr_codes || 0,
                 status: status
             };
@@ -77,7 +80,7 @@ exports.createEvent = async (req, res) => {
             return res.status(401).json({ success: false, message: "Non autorisé" });
         }
 
-        const { title, description, location, startDate, endDate } = req.body;
+        const { title, description, location, id_area, areaIds, startDate, endDate } = req.body;
 
         if (!title || !startDate || !endDate) {
             return res.status(400).json({ success: false, message: "Titre, Date de début et Date de fin sont requis" });
@@ -89,6 +92,8 @@ exports.createEvent = async (req, res) => {
             title: title,
             description: description,
             location: location,
+            id_area: id_area,
+            areaIds: areaIds,
             start_date: new Date(startDate),
             end_date: new Date(endDate),
             org_id: orgId
@@ -110,7 +115,7 @@ exports.updateEvent = async (req, res) => {
 
         const orgId = req.user.org_id;
         const eventId = Number(req.params.event_id);
-        const { title, description, location, startDate, endDate } = req.body;
+        const { title, description, location, id_area, areaIds, startDate, endDate } = req.body;
 
         // Verify ownership first
         const existingEvent = await eventService.findById(orgId, eventId);
@@ -122,6 +127,8 @@ exports.updateEvent = async (req, res) => {
             title,
             description,
             location,
+            id_area,
+            areaIds,
             start_date: startDate ? new Date(startDate) : undefined,
             end_date: endDate ? new Date(endDate) : undefined
         });
