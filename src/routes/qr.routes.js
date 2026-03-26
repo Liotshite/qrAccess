@@ -12,6 +12,8 @@ router.get("/event/:event_id", authMiddleware, qrController.getQrsByEvent);
 // Générer un QR code pour un événement spécifique
 router.post("/generate/:event_id", authMiddleware, qrController.generateQrForEvent);
 
+// Révoquer un QR code
+router.put("/revoke/:id", authMiddleware, qrController.revokeQr);
 
 // Note: Toutes les anciennes routes (/ajoutP, /updateP, /mytransactions) 
 // qui semblaient concerner un autre projet ("produits") ont été supprimées 

@@ -27,10 +27,9 @@ export default function EventDetailPage() {
     const [qrForm, setQrForm] = useState({
         fullName: "", email: "", phone: "",
         accessType: 'single', limit: "1",
-        validFrom: "", validUntil: ""
+        validFrom: "", validUntil: "", level: "1"
     });
     const [generatingQr, setGeneratingQr] = useState(false);
-    const [successData, setSuccessData] = useState(null);
     const [qrError, setQrError] = useState("");
 
     // Edit Form
@@ -39,6 +38,12 @@ export default function EventDetailPage() {
     });
     const [updatingEvent, setUpdatingEvent] = useState(false);
     const [editError, setEditError] = useState("");
+
+    // Filters and Actions State
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All Statuses");
+    const [selectedQr, setSelectedQr] = useState(null);
+    const [revokingId, setRevokingId] = useState(null);
 
     useEffect(() => {
         if (eventId) {
@@ -175,8 +180,8 @@ export default function EventDetailPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setSuccessData(data);
-                setQrForm({ ...qrForm, fullName: "", email: "", phone: "" });
+                setShowQrModal(false);
+                setQrForm({ ...qrForm, fullName: "", email: "", phone: "", level: "1" });
                 // Refresh QR list
                 const qrRes = await fetch(`http://localhost:5000/qr/event/${eventId}`, { credentials: "include" });
                 const qrData = await qrRes.json();
@@ -190,6 +195,38 @@ export default function EventDetailPage() {
             setGeneratingQr(false);
         }
     };
+
+    const handleRevoke = async (id) => {
+        if (!confirm("Voulez-vous vraiment révoquer ce QR Code ?")) return;
+        setRevokingId(id);
+        try {
+            const res = await fetch(`http://localhost:5000/qr/revoke/${id}`, {
+                method: "PUT",
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setQrCodes(qrCodes.map(qr => qr.id === id ? { ...qr, status: 'revoked' } : qr));
+            } else {
+                alert(data.message || "Erreur lors de la révocation.");
+            }
+        } catch (err) {
+            alert("Erreur de connexion au serveur.");
+        } finally {
+            setRevokingId(null);
+        }
+    };
+
+    const filteredQrs = qrCodes.filter(qr => {
+        const matchesSearch = !searchQuery ||
+            qr.holder?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            String(qr.id).includes(searchQuery);
+
+        const matchesStatus = statusFilter === "All Statuses" ||
+            qr.status.toLowerCase() === statusFilter.toLowerCase();
+
+        return matchesSearch && matchesStatus;
+    });
 
     const getStatusStyle = (status) => {
         if (status === 'active') return 'bg-emerald-100 text-emerald-700';
@@ -281,8 +318,8 @@ export default function EventDetailPage() {
                             <div className="flex items-center gap-2 text-slate-600">
                                 <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                 <span className="text-sm font-medium">
-                                    {event.EventSchedules?.length > 0 
-                                        ? event.EventSchedules.map(s => s.area?.area_name).filter(Boolean).join(", ") 
+                                    {event.EventSchedules?.length > 0
+                                        ? event.EventSchedules.map(s => s.area?.area_name).filter(Boolean).join(", ")
                                         : "Lieu non défini"}
                                 </span>
                             </div>
@@ -319,7 +356,7 @@ export default function EventDetailPage() {
                     <h2 className="text-lg font-bold text-slate-900">Codes QR de cet événement</h2>
                     <span className="text-sm text-slate-500">{qrCodes.length} total</span>
                 </div>
-                
+
                 {/* Filters and Search */}
                 <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-4 items-center justify-between">
                     <div className="relative w-full md:w-96">
@@ -330,17 +367,20 @@ export default function EventDetailPage() {
                         </div>
                         <input
                             type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Rechercher par ID, Nom..."
                             className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-colors"
                         />
                     </div>
 
                     <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                        <select className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                            <option>Tous les statuts</option>
-                            <option>Actif</option>
-                            <option>Épuisé</option>
-                            <option>Expiré</option>
+                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            <option value="All Statuses">Tous les statuts</option>
+                            <option value="active">Actif</option>
+                            <option value="exhausted">Épuisé</option>
+                            <option value="expired">Expiré</option>
+                            <option value="revoked">Révoqué</option>
                         </select>
                     </div>
                 </div>
@@ -359,14 +399,14 @@ export default function EventDetailPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-700 text-sm">
-                            {qrCodes.length === 0 ? (
+                            {filteredQrs.length === 0 ? (
                                 <tr>
                                     <td colSpan="7" className="px-6 py-14 text-center">
                                         <div className="w-14 h-14 bg-slate-100 text-slate-300 rounded-2xl flex items-center justify-center mx-auto mb-3">
                                             <QrCode className="w-7 h-7" />
                                         </div>
                                         <h3 className="text-base font-semibold text-slate-900">Aucun QR code</h3>
-                                        <p className="text-slate-500 text-sm mt-1">Générez votre premier code QR pour cet événement.</p>
+                                        <p className="text-slate-500 text-sm mt-1">{qrCodes.length === 0 ? "Générez votre premier code QR pour cet événement." : "Aucun QR Code trouvé pour ces critères."}</p>
                                         <button
                                             onClick={() => {
                                                 setShowQrModal(true);
@@ -388,7 +428,7 @@ export default function EventDetailPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                qrCodes.map((qr) => (
+                                filteredQrs.map((qr) => (
                                     <tr key={qr.id} className="hover:bg-slate-50/60 transition-colors group">
                                         <td className="px-6 py-4 font-medium text-slate-900">{qr.id}</td>
                                         <td className="px-6 py-4">
@@ -411,7 +451,7 @@ export default function EventDetailPage() {
                                         <td className="px-6 py-4 text-slate-500">{qr.createdAt}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir Ticket">
+                                                <button onClick={() => setSelectedQr(qr)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir Ticket">
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                                 </button>
                                                 <a
@@ -424,8 +464,8 @@ export default function EventDetailPage() {
                                                     <Download className="w-5 h-5" />
                                                 </a>
                                                 {qr.status === 'active' ? (
-                                                    <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Révoquer Accès">
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                                    <button onClick={() => handleRevoke(qr.id)} disabled={revokingId === qr.id} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50" title="Révoquer Accès">
+                                                        {revokingId === qr.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>}
                                                     </button>
                                                 ) : null}
                                             </div>
@@ -441,24 +481,21 @@ export default function EventDetailPage() {
             {/* ── MODAL: Generate QR ── */}
             {showQrModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row my-8">
-                        {/* Left Side: Form */}
-                        <div className="flex-1 p-6 sm:p-8 border-b md:border-b-0 md:border-r border-slate-100">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-900">Générer un QR Code</h2>
-                                    <p className="text-xs text-slate-500 mt-1 truncate max-w-[200px]">Pour : <span className="font-semibold text-blue-600">{event.title}</span></p>
-                                </div>
-                                <button onClick={() => setShowQrModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors md:hidden">
-                                    <X className="w-5 h-5 text-slate-400" />
-                                </button>
-                            </div>
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-8 relative my-8">
+                        <button onClick={() => setShowQrModal(false)} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                            <X className="w-5 h-5 text-slate-400" />
+                        </button>
+                        
+                        <div className="mb-6 pr-8">
+                            <h2 className="text-xl font-bold text-slate-900">Générer un QR Code</h2>
+                            <p className="text-xs text-slate-500 mt-1 truncate">Pour : <span className="font-semibold text-blue-600">{event.title}</span></p>
+                        </div>
 
-                            <form onSubmit={handleGenerateQr} className="space-y-6">
+                        <form onSubmit={handleGenerateQr} className="space-y-6">
                                 {qrError && (
                                     <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 animate-in fade-in zoom-in duration-300">{qrError}</div>
                                 )}
-                                
+
                                 <div className="space-y-5">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">Nom complet *</label>
@@ -493,6 +530,16 @@ export default function EventDetailPage() {
                                             />
                                         </div>
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Niveau d'accréditation</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={qrForm.level}
+                                        onChange={(e) => setQrForm({ ...qrForm, level: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                                    />
                                 </div>
 
                                 <div className="space-y-3">
@@ -559,85 +606,46 @@ export default function EventDetailPage() {
                                     {generatingQr ? "Génération en cours..." : "Générer & Sauvegarder"}
                                 </button>
                             </form>
-                        </div>
+                    </div>
+                </div>
+            )}
 
-                        {/* Right Side: Preview/Success */}
-                        <div className="w-full md:w-80 bg-slate-50 p-6 sm:p-8 flex flex-col items-center justify-center relative">
-                            <button onClick={() => setShowQrModal(false)} className="absolute top-4 right-4 p-2 hover:bg-white rounded-xl transition-colors hidden md:block">
-                                <X className="w-5 h-5 text-slate-400" />
-                            </button>
+            {/* ── MODAL: View Ticket ── */}
+            {selectedQr && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 relative overflow-hidden text-center animate-in zoom-in duration-300">
+                        <button onClick={() => setSelectedQr(null)} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                            <X className="w-5 h-5 text-slate-400" />
+                        </button>
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Détails du Ticket</h3>
 
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8">Aperçu du Pass</h3>
+                        <div className="w-full flex flex-col items-center">
+                            <img src={`http://localhost:5000/qrcodes/qr_${selectedQr.token}.png`} alt="QR Code" className="w-48 h-48 rounded-2xl border border-slate-100 p-2 shadow-inner bg-slate-50 mb-6 object-contain" />
 
-                            <div className="w-full max-w-[240px] flex flex-col items-center">
-                                {successData ? (
-                                    <div className="w-full bg-white rounded-3xl border-2 border-emerald-500 p-5 shadow-xl animate-in zoom-in duration-500">
-                                        <div className="flex flex-col items-center text-center space-y-4">
-                                            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                                                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-                                            </div>
-                                            <p className="text-xs font-bold text-emerald-700 uppercase">Généré avec succès</p>
-                                            <img
-                                                src={`http://localhost:5000${successData.qrUrl}`}
-                                                alt="QR Code"
-                                                className="w-40 h-40 rounded-2xl border border-slate-100 p-2 shadow-inner bg-slate-50"
-                                            />
-                                            <div className="flex w-full gap-2">
-                                                <a
-                                                    href={`http://localhost:5000${successData.qrUrl}`}
-                                                    download
-                                                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                                <button
-                                                    onClick={() => setSuccessData(null)}
-                                                    className="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
-                                                >
-                                                    Nouveau
-                                                </button>
-                                            </div>
-                                        </div>
+                            <div className="w-full space-y-4 text-left bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Titulaire</p>
+                                    <p className="text-sm font-black text-slate-900 truncate">{selectedQr.holder}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Événement</p>
+                                    <p className="text-sm font-bold text-slate-700">{event.title}</p>
+                                </div>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Statut</p>
+                                        <p className={`text-xs font-bold capitalize ${selectedQr.status === 'active' ? 'text-emerald-600' : selectedQr.status === 'revoked' ? 'text-red-600' : 'text-slate-600'}`}>
+                                            {selectedQr.status}
+                                        </p>
                                     </div>
-                                ) : (
-                                    <div className="w-full bg-white rounded-3xl border border-slate-200 p-5 shadow-lg group relative overflow-hidden transition-all hover:shadow-xl">
-                                        <div className="flex flex-col items-center text-center space-y-4">
-                                            <div className="w-40 h-40 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center relative overflow-hidden">
-                                                <span className="text-slate-300 text-[10px] font-bold uppercase p-4">Code QR en attente</span>
-                                                {/* Scan Line Animation */}
-                                                <div className="absolute inset-x-0 h-1 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-[scan_3s_ease-in-out_infinite]"></div>
-                                            </div>
-                                            
-                                            <div className="w-full space-y-3 pt-2 text-left">
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Titulaire</p>
-                                                    <p className="text-sm font-black text-slate-900 truncate">{qrForm.fullName || "—"}</p>
-                                                </div>
-                                                <div className="flex justify-between items-end">
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Type</p>
-                                                        <p className="text-xs font-bold text-blue-600 capitalize">{qrForm.accessType}</p>
-                                                    </div>
-                                                    <div className="space-y-1 text-right">
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Scans</p>
-                                                        <p className="text-xs font-bold text-slate-700">{qrForm.accessType === 'unlimited' ? '∞' : qrForm.limit}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Scans</p>
+                                        <p className="text-xs font-bold text-slate-700">{selectedQr.scans}</p>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                    {/* Inline Animation Style */}
-                    <style jsx>{`
-                        @keyframes scan {
-                            0% { top: 0; }
-                            50% { top: 100%; transition: top 1.5s ease-in-out; }
-                            100% { top: 0; }
-                        }
-                    `}</style>
                 </div>
             )}
 

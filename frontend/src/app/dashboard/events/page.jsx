@@ -9,6 +9,10 @@ export default function EventsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Filters state
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All Statuses");
+
     useEffect(() => {
         const fetchEvents = async () => {
             try {
@@ -34,6 +38,17 @@ export default function EventsPage() {
 
         fetchEvents();
     }, []);
+
+    const filteredEvents = events.filter(event => {
+        const matchesSearch = !searchQuery || 
+            event.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            event.location?.toLowerCase().includes(searchQuery.toLowerCase());
+            
+        const matchesStatus = statusFilter === "All Statuses" || 
+                              event.status === statusFilter;
+                              
+        return matchesSearch && matchesStatus;
+    });
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
@@ -62,17 +77,19 @@ export default function EventsPage() {
                     </div>
                     <input
                         type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search events by name or location..."
                         className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-colors"
                     />
                 </div>
 
                 <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    <select className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                        <option>All Statuses</option>
-                        <option>Upcoming</option>
-                        <option>Active</option>
-                        <option>Past</option>
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <option value="All Statuses">All Statuses</option>
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Active">Active</option>
+                        <option value="Past">Past</option>
                     </select>
                 </div>
             </div>
@@ -105,18 +122,18 @@ export default function EventsPage() {
                                         {error}
                                     </td>
                                 </tr>
-                            ) : events.length === 0 ? (
+                            ) : filteredEvents.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="px-6 py-12 text-center">
                                         <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                         </div>
                                         <h3 className="text-lg font-semibold text-slate-900">Aucun événement</h3>
-                                        <p className="text-slate-500 mt-1 max-w-sm mx-auto">Vous n'avez pas encore créé de lieu ou d'événement. Cliquez sur "Create Event" pour commencer.</p>
+                                        <p className="text-slate-500 mt-1 max-w-sm mx-auto">{events.length === 0 ? "Vous n'avez pas encore créé de lieu ou d'événement. Cliquez sur \"Create Event\" pour commencer." : "Aucun événement trouvé pour ces critères."}</p>
                                     </td>
                                 </tr>
                             ) : (
-                                events.map((event) => (
+                                filteredEvents.map((event) => (
                                     <tr key={event.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="px-6 py-4 font-medium text-slate-900">
                                             <Link href={`/dashboard/events/${event.id}`} className="flex items-center gap-3 hover:text-blue-600 transition-colors">

@@ -14,7 +14,7 @@ exports.generateQrForEvent = async (req, res) => {
 
         const orgId = req.user.org_id;
         const eventId = Number(req.params.event_id);
-        const { fullName, email, phone, accessType, limit, validFrom, validUntil } = req.body;
+        const { fullName, email, phone, accessType, limit, validFrom, validUntil, level } = req.body;
 
         if (!fullName || !accessType) {
             return res.status(400).json({ success: false, message: "Nom complet et Type d'accès requis" });
@@ -41,6 +41,7 @@ exports.generateQrForEvent = async (req, res) => {
             usage_limit: usageLimit,
             valid_from: validFrom ? new Date(validFrom) : null,
             valid_until: validUntil ? new Date(validUntil) : null,
+            level: level ? Number(level) : 1,
             holder_name: fullName,
             holder_email: email || null,
             holder_phone: phone || null,
@@ -159,4 +160,35 @@ exports.getQrsByEvent = async (req, res) => {
         return res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 };
+
+// Révocation d'un QR code
+exports.revokeQr = async (req, res) => {
+    try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
+
+        const orgId = req.user.org_id;
+        const qrId = Number(req.params.id);
+
+        const qr = await qrService.getQrById(qrId);
+        if (!qr) {
+            return res.status(404).json({ success: false, message: "QR Code introuvable" });
+        }
+
+        // Vérification que le QR code appartient bien à un événement de l'organisation
+        const event = await eventService.findById(orgId, qr.event_id);
+        if (!event) {
+            return res.status(403).json({ success: false, message: "Accès refusé" });
+        }
+
+        await qrService.updateQr(qrId, { status: "revoked" });
+
+        return res.status(200).json({ success: true, message: "QR Code révoqué avec succès" });
+    } catch (error) {
+        console.error("Erreur lors de la révocation du QR:", error);
+        return res.status(500).json({ success: false, message: "Erreur serveur interne" });
+    }
+};
+
 
