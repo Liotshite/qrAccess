@@ -98,7 +98,6 @@ model Event {
 model QrCode {
   qr_id           Int       @id @default(autoincrement())
   event_id      Int
-  information   String?
   unique_token  String    @unique
   status        QrStatus
   usage_limit   Int       @default(1)
@@ -107,6 +106,9 @@ model QrCode {
   valid_until   DateTime?
   deleted_at    DateTime?
   level         Int?
+  holder_name   String?
+  holder_email  String?
+  holder_phone  String?
 
   event         Event     @relation(fields: [event_id], references: [event_id])
   scan_logs     ScanLog[]

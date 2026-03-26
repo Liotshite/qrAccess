@@ -114,6 +114,12 @@ export default function EventDetailPage() {
         e.preventDefault();
         setEditError("");
         setUpdatingEvent(true);
+        if (new Date(editForm.endDate) <= new Date(editForm.startDate)) {
+            setEditError("La date de fin doit être postérieure à la date de début.");
+            setUpdatingEvent(false);
+            return;
+        }
+
         try {
             const res = await fetch(`http://localhost:5000/events/${eventId}`, {
                 method: "PUT",
@@ -287,7 +293,19 @@ export default function EventDetailPage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => { setShowQrModal(true); setSuccessData(null); setQrError(""); }}
+                        onClick={() => {
+                            setShowQrModal(true);
+                            setSuccessData(null);
+                            setQrError("");
+                            if (event && event.EventSchedules && event.EventSchedules.length > 0) {
+                                const schedules = event.EventSchedules;
+                                setQrForm(prev => ({
+                                    ...prev,
+                                    validFrom: new Date(schedules[0].start_date).toISOString().slice(0, 16),
+                                    validUntil: new Date(schedules[schedules.length - 1].end_date).toISOString().slice(0, 16)
+                                }));
+                            }
+                        }}
                         className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm hover:shadow active:scale-95 transition-all text-sm flex-shrink-0"
                     >
                         <Plus className="w-5 h-5" /> Générer un QR
@@ -323,7 +341,19 @@ export default function EventDetailPage() {
                                         <h3 className="text-base font-semibold text-slate-900">Aucun QR code</h3>
                                         <p className="text-slate-500 text-sm mt-1">Générez votre premier code QR pour cet événement.</p>
                                         <button
-                                            onClick={() => { setShowQrModal(true); setSuccessData(null); setQrError(""); }}
+                                            onClick={() => {
+                                                setShowQrModal(true);
+                                                setSuccessData(null);
+                                                setQrError("");
+                                                if (event && event.EventSchedules && event.EventSchedules.length > 0) {
+                                                    const schedules = event.EventSchedules;
+                                                    setQrForm(prev => ({
+                                                        ...prev,
+                                                        validFrom: new Date(schedules[0].start_date).toISOString().slice(0, 16),
+                                                        validUntil: new Date(schedules[schedules.length - 1].end_date).toISOString().slice(0, 16)
+                                                    }));
+                                                }
+                                            }}
                                             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
                                         >
                                             <Plus className="w-4 h-4" /> Générer un QR
@@ -374,152 +404,204 @@ export default function EventDetailPage() {
 
             {/* ── MODAL: Generate QR ── */}
             {showQrModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900">Générer un QR Code</h2>
-                                <p className="text-xs text-slate-500 mt-0.5">Pour : <span className="font-medium text-slate-700">{event.title}</span></p>
-                            </div>
-                            <button onClick={() => setShowQrModal(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-                                <X className="w-5 h-5 text-slate-400" />
-                            </button>
-                        </div>
-
-                        <div className="p-6">
-                            {successData ? (
-                                <div className="text-center space-y-4">
-                                    <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-                                        <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-slate-900">QR Code généré !</h3>
-                                    <img
-                                        src={`http://localhost:5000${successData.qrUrl}`}
-                                        alt="QR Code généré"
-                                        className="w-40 h-40 rounded-xl border border-slate-100 p-1.5 mx-auto shadow-sm"
-                                    />
-                                    <div className="flex gap-3 justify-center pt-2">
-                                        <a
-                                            href={`http://localhost:5000${successData.qrUrl}`}
-                                            download
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-                                        >
-                                            <Download className="w-4 h-4" /> Télécharger
-                                        </a>
-                                        <button
-                                            onClick={() => setSuccessData(null)}
-                                            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
-                                        >
-                                            Nouveau QR
-                                        </button>
-                                    </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row my-8">
+                        {/* Left Side: Form */}
+                        <div className="flex-1 p-6 sm:p-8 border-b md:border-b-0 md:border-r border-slate-100">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">Générer un QR Code</h2>
+                                    <p className="text-xs text-slate-500 mt-1 truncate max-w-[200px]">Pour : <span className="font-semibold text-blue-600">{event.title}</span></p>
                                 </div>
-                            ) : (
-                                <form onSubmit={handleGenerateQr} className="space-y-4">
-                                    {qrError && (
-                                        <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">{qrError}</div>
-                                    )}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="col-span-2 space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nom complet *</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                placeholder="Jean Dupont"
-                                                value={qrForm.fullName}
-                                                onChange={(e) => setQrForm({ ...qrForm, fullName: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</label>
+                                <button onClick={() => setShowQrModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors md:hidden">
+                                    <X className="w-5 h-5 text-slate-400" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleGenerateQr} className="space-y-6">
+                                {qrError && (
+                                    <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 animate-in fade-in zoom-in duration-300">{qrError}</div>
+                                )}
+                                
+                                <div className="space-y-5">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Nom complet *</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="John Doe"
+                                            value={qrForm.fullName}
+                                            onChange={(e) => setQrForm({ ...qrForm, fullName: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Email</label>
                                             <input
                                                 type="email"
-                                                placeholder="jean@exemple.com"
+                                                placeholder="john@example.com"
                                                 value={qrForm.email}
                                                 onChange={(e) => setQrForm({ ...qrForm, email: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
                                             />
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Téléphone</label>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Téléphone</label>
                                             <input
                                                 type="tel"
-                                                placeholder="+33 6 00 00 00 00"
+                                                placeholder="+33..."
                                                 value={qrForm.phone}
                                                 onChange={(e) => setQrForm({ ...qrForm, phone: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
                                             />
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Type d'accès</label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {[
-                                                { value: 'single', label: 'Simple', desc: '1 scan' },
-                                                { value: 'multi', label: 'Multiple', desc: 'N scans' },
-                                                { value: 'unlimited', label: 'Illimité', desc: '∞ scans' }
-                                            ].map(({ value, label, desc }) => (
-                                                <button
-                                                    key={value}
-                                                    type="button"
-                                                    onClick={() => setQrForm({ ...qrForm, accessType: value, limit: value === 'single' ? "1" : value === 'unlimited' ? "999999" : "2" })}
-                                                    className={`px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left ${qrForm.accessType === value ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-slate-700">Type d'accès</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        {[
+                                            { value: 'single', label: 'Simple', desc: '1 scan' },
+                                            { value: 'multi', label: 'Multiple', desc: 'N scans' },
+                                            { value: 'unlimited', label: 'Illimité', desc: '∞ scans' }
+                                        ].map(({ value, label, desc }) => (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                onClick={() => setQrForm({ ...qrForm, accessType: value, limit: value === 'single' ? "1" : value === 'unlimited' ? "999999" : (qrForm.limit == "1" ? "2" : qrForm.limit) })}
+                                                className={`px-3 py-3 rounded-xl border text-left transition-all ${qrForm.accessType === value ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                                            >
+                                                <div className="text-sm font-bold">{label}</div>
+                                                <div className="text-[10px] opacity-70 font-medium">{desc}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {qrForm.accessType === 'multi' && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className="text-sm font-medium text-slate-700">Nombre de scans</label>
+                                        <input
+                                            type="number"
+                                            min="2"
+                                            value={qrForm.limit}
+                                            onChange={(e) => setQrForm({ ...qrForm, limit: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Valide du</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={qrForm.validFrom}
+                                            onChange={(e) => setQrForm({ ...qrForm, validFrom: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all text-slate-600"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Valide jusqu'au</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={qrForm.validUntil}
+                                            onChange={(e) => setQrForm({ ...qrForm, validUntil: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all text-slate-600"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={generatingQr}
+                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+                                >
+                                    {generatingQr ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
+                                    {generatingQr ? "Génération en cours..." : "Générer & Sauvegarder"}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Right Side: Preview/Success */}
+                        <div className="w-full md:w-80 bg-slate-50 p-6 sm:p-8 flex flex-col items-center justify-center relative">
+                            <button onClick={() => setShowQrModal(false)} className="absolute top-4 right-4 p-2 hover:bg-white rounded-xl transition-colors hidden md:block">
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8">Aperçu du Pass</h3>
+
+                            <div className="w-full max-w-[240px] flex flex-col items-center">
+                                {successData ? (
+                                    <div className="w-full bg-white rounded-3xl border-2 border-emerald-500 p-5 shadow-xl animate-in zoom-in duration-500">
+                                        <div className="flex flex-col items-center text-center space-y-4">
+                                            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                                                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                                            </div>
+                                            <p className="text-xs font-bold text-emerald-700 uppercase">Généré avec succès</p>
+                                            <img
+                                                src={`http://localhost:5000${successData.qrUrl}`}
+                                                alt="QR Code"
+                                                className="w-40 h-40 rounded-2xl border border-slate-100 p-2 shadow-inner bg-slate-50"
+                                            />
+                                            <div className="flex w-full gap-2">
+                                                <a
+                                                    href={`http://localhost:5000${successData.qrUrl}`}
+                                                    download
+                                                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                                                 >
-                                                    <div className="font-semibold">{label}</div>
-                                                    <div className="text-xs opacity-70">{desc}</div>
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => setSuccessData(null)}
+                                                    className="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
+                                                >
+                                                    Nouveau
                                                 </button>
-                                            ))}
+                                            </div>
                                         </div>
                                     </div>
-
-                                    {qrForm.accessType === 'multi' && (
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre de scans</label>
-                                            <input
-                                                type="number"
-                                                min="2"
-                                                value={qrForm.limit}
-                                                onChange={(e) => setQrForm({ ...qrForm, limit: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
-                                            />
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valide du</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={qrForm.validFrom}
-                                                onChange={(e) => setQrForm({ ...qrForm, validFrom: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all text-slate-600"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valide jusqu'au</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={qrForm.validUntil}
-                                                onChange={(e) => setQrForm({ ...qrForm, validUntil: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-slate-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all text-slate-600"
-                                            />
+                                ) : (
+                                    <div className="w-full bg-white rounded-3xl border border-slate-200 p-5 shadow-lg group relative overflow-hidden transition-all hover:shadow-xl">
+                                        <div className="flex flex-col items-center text-center space-y-4">
+                                            <div className="w-40 h-40 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center relative overflow-hidden">
+                                                <span className="text-slate-300 text-[10px] font-bold uppercase p-4">Code QR en attente</span>
+                                                {/* Scan Line Animation */}
+                                                <div className="absolute inset-x-0 h-1 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-[scan_3s_ease-in-out_infinite]"></div>
+                                            </div>
+                                            
+                                            <div className="w-full space-y-3 pt-2 text-left">
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Titulaire</p>
+                                                    <p className="text-sm font-black text-slate-900 truncate">{qrForm.fullName || "—"}</p>
+                                                </div>
+                                                <div className="flex justify-between items-end">
+                                                    <div className="space-y-1">
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Type</p>
+                                                        <p className="text-xs font-bold text-blue-600 capitalize">{qrForm.accessType}</p>
+                                                    </div>
+                                                    <div className="space-y-1 text-right">
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Scans</p>
+                                                        <p className="text-xs font-bold text-slate-700">{qrForm.accessType === 'unlimited' ? '∞' : qrForm.limit}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={generatingQr}
-                                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                                    >
-                                        {generatingQr ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
-                                        {generatingQr ? "Génération..." : "Générer & Sauvegarder"}
-                                    </button>
-                                </form>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
+                    {/* Inline Animation Style */}
+                    <style jsx>{`
+                        @keyframes scan {
+                            0% { top: 0; }
+                            50% { top: 100%; transition: top 1.5s ease-in-out; }
+                            100% { top: 0; }
+                        }
+                    `}</style>
                 </div>
             )}
 

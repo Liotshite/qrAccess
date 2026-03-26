@@ -38,6 +38,8 @@ exports.getEvents = async (req, res) => {
                 id: e.event_id,
                 name: e.title,
                 date: `${startDateStr} - ${endDateStr}`,
+                startDate: firstSchedule ? firstSchedule.start_date : null,
+                endDate: lastSchedule ? lastSchedule.end_date : null,
                 location: locationNames,
                 qrs: e._count?.qr_codes || 0,
                 status: status

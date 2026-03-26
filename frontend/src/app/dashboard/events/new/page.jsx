@@ -64,6 +64,11 @@ export default function NewEventPage() {
             return;
         }
 
+        if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+            setError("La date de fin doit être postérieure à la date de début.");
+            return;
+        }
+
         if (formData.areaIds.length === 0) {
             setError("Veuillez sélectionner au moins une zone.");
             return;

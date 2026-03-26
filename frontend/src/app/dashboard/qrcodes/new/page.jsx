@@ -47,7 +47,20 @@ export default function NewQRCodePage() {
     }, []);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        
+        let newFormData = { ...formData, [name]: value };
+
+        // If event changes, auto-fill validity dates
+        if (name === 'eventId') {
+            const selectedEvent = events.find(ev => ev.id == value);
+            if (selectedEvent && selectedEvent.startDate && selectedEvent.endDate) {
+                newFormData.validFrom = new Date(selectedEvent.startDate).toISOString().slice(0, 16);
+                newFormData.validUntil = new Date(selectedEvent.endDate).toISOString().slice(0, 16);
+            }
+        }
+
+        setFormData(newFormData);
     };
 
     const handleAccessTypeChange = (type) => {
