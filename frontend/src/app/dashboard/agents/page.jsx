@@ -1,57 +1,162 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function AgentsPage() {
-    // Dummy data for demonstration
-    const [agents, setAgents] = useState([
-        { id: "1", name: "David G.", email: "david.g@acmecorp.com", role: "Agent", status: "Active", lastActive: "2 mins ago", scans: 142 },
-        { id: "2", name: "Sarah T.", email: "sarah.t@acmecorp.com", role: "Agent", status: "Active", lastActive: "15 mins ago", scans: 89 },
-        { id: "3", name: "Mike R.", email: "mike.r@acmecorp.com", role: "Admin", status: "Active", lastActive: "1 hour ago", scans: 25 },
-        { id: "4", name: "Elena V.", email: "elena.v@acmecorp.com", role: "Agent", status: "Inactive", lastActive: "3 days ago", scans: 0 },
-        { id: "5", name: "Tom B.", email: "tom.b@acmecorp.com", role: "Agent", status: "Active", lastActive: "Online", scans: 312 },
-    ]);
+    const [agents, setAgents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    // Filters
+    const [searchQuery, setSearchQuery] = useState("");
+    const [roleFilter, setRoleFilter] = useState("All Roles");
+    const [statusFilter, setStatusFilter] = useState("All Statuses");
 
     // Modal state for adding a new agent
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [addForm, setAddForm] = useState({ fullName: "", email: "", role: "ORG_AGENT" });
+    const [adding, setAdding] = useState(false);
+    const [addError, setAddError] = useState("");
+    const [addSuccess, setAddSuccess] = useState("");
+
+    const [togglingId, setTogglingId] = useState(null);
+
+    useEffect(() => {
+        fetchAgents();
+    }, []);
+
+    const fetchAgents = async () => {
+        try {
+            const res = await fetch("http://localhost:5000/agents", {
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAgents(data.agents);
+            } else {
+                setError(data.message || "Erreur lors du chargement des agents.");
+            }
+        } catch (err) {
+            setError("Erreur de connexion au serveur.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddAgent = async (e) => {
+        e.preventDefault();
+        setAddError("");
+        setAddSuccess("");
+        setAdding(true);
+
+        try {
+            const res = await fetch("http://localhost:5000/agents", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(addForm)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setAddSuccess(data.message);
+                setAddForm({ fullName: "", email: "", role: "ORG_AGENT" });
+                fetchAgents();
+                setTimeout(() => {
+                    setIsAddModalOpen(false);
+                    setAddSuccess("");
+                }, 2000);
+            } else {
+                setAddError(data.message || "Erreur lors de l'ajout.");
+            }
+        } catch (err) {
+            setAddError("Erreur de connexion serveur.");
+        } finally {
+            setAdding(false);
+        }
+    };
+
+    const handleToggleStatus = async (agentId) => {
+        if (!confirm("Voulez-vous modifier le statut de cet agent ?")) return;
+        setTogglingId(agentId);
+        try {
+            const res = await fetch(`http://localhost:5000/agents/${agentId}/toggle`, {
+                method: "PUT",
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAgents(agents.map(a => a.id === agentId ? { ...a, status: data.newStatus } : a));
+            } else {
+                alert(data.message || "Erreur avec cet agent.");
+            }
+        } catch (err) {
+            alert("Erreur serveur.");
+        } finally {
+            setTogglingId(null);
+        }
+    };
+
+    const filteredAgents = agents.filter(agent => {
+        const matchesSearch = !searchQuery || 
+            agent.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            agent.email.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const matchesRole = roleFilter === "All Roles" || agent.role.toLowerCase() === roleFilter.toLowerCase();
+        const matchesStatus = statusFilter === "All Statuses" || agent.status.toLowerCase() === statusFilter.toLowerCase();
+        
+        return matchesSearch && matchesRole && matchesStatus;
+    });
+
+    const activeAgentsCount = agents.filter(a => a.status === 'Active').length;
+    const planLimit = 15; // Hardcoded default for mockup styling
+    const percentFill = (activeAgentsCount / planLimit) * 100;
+
+    if (loading) {
+        return (
+            <div className="flex h-[80vh] items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
-            {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Agents & Staff</h1>
-                    <p className="text-slate-500 mt-1">Manage the team members authorized to scan QR codes.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">Agents & Équipe</h1>
+                    <p className="text-slate-500 mt-1">Gérez les membres autorisés à scanner les codes QR.</p>
                 </div>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
                     className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm hover:shadow active:scale-95 transition-all text-sm"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                    Add Agent
+                    Ajouter Agent
                 </button>
             </div>
 
-            {/* Quick Stats Banner */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-8">
                 <div className="flex-1 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-slate-500">Plan Limit</p>
-                        <p className="text-xl font-bold text-slate-900">12 / 15 <span className="text-sm font-normal text-slate-500">Active Agents</span></p>
+                        <p className="text-sm font-medium text-slate-500">Limite du Plan</p>
+                        <p className="text-xl font-bold text-slate-900">{activeAgentsCount} / {planLimit} <span className="text-sm font-normal text-slate-500">Agents Actifs</span></p>
                     </div>
                 </div>
                 <div className="w-full md:w-auto flex-1 md:flex-none">
                     <div className="w-full bg-slate-100 rounded-full h-2.5 mb-2">
-                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '80%' }}></div>
+                        <div className="bg-blue-600 h-2.5 rounded-full duration-500 ease-out transition-all" style={{ width: percentFill + "%" }}></div>
                     </div>
-                    <p className="text-xs text-slate-500 text-right">3 seats remaining</p>
+                    <p className="text-xs text-slate-500 text-right">{Math.max(0, planLimit - activeAgentsCount)} places restantes</p>
                 </div>
             </div>
 
-            {/* Filters and Search */}
+            {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl">{error}</div>}
+
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="relative w-full md:w-96">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -61,18 +166,21 @@ export default function AgentsPage() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Search agents by name or email..."
+                        placeholder="Rechercher par nom ou email..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-colors"
                     />
                 </div>
 
                 <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    <select className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                         <option>All Roles</option>
                         <option>Admin</option>
                         <option>Agent</option>
+                        <option>Opérateur</option>
                     </select>
-                    <select className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                         <option>All Statuses</option>
                         <option>Active</option>
                         <option>Inactive</option>
@@ -80,68 +188,87 @@ export default function AgentsPage() {
                 </div>
             </div>
 
-            {/* Data Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-slate-100/80 text-slate-600 text-sm border-b-2 border-slate-300">
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Agent Details</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Détails Agent</th>
+                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Rôle</th>
+                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Statut</th>
                                 <th className="px-6 py-4 font-semibold uppercase tracking-wider">Total Scans</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Last Active</th>
+                                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Dernière Connexion</th>
                                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y-2 divide-slate-300 text-slate-700 text-sm">
-                            {agents.map((agent) => (
-                                <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
-                                                {agent.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-slate-900">{agent.name}</p>
-                                                <p className="text-slate-500 text-xs">{agent.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${agent.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-50 text-slate-700 border-slate-200'
-                                            }`}>
-                                            {agent.role}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${agent.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
-                                            <span className="font-medium">{agent.status}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 font-medium text-slate-900">{agent.scans}</td>
-                                    <td className="px-6 py-4 text-slate-500">{agent.lastActive}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Agent">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            </button>
-                                            {agent.role !== 'Admin' && (
-                                                <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Revoke Access">
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
+                            {filteredAgents.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">Aucun agent trouvé.</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredAgents.map((agent) => {
+                                    const isAdmin = agent.role === 'Admin';
+                                    const isOperator = agent.role === 'Opérateur';
+                                    const spanClass = isAdmin ? "px-2.5 py-1 rounded-lg text-xs font-semibold border bg-purple-50 text-purple-700 border-purple-200" : isOperator ? "px-2.5 py-1 rounded-lg text-xs font-semibold border bg-amber-50 text-amber-700 border-amber-200" : "px-2.5 py-1 rounded-lg text-xs font-semibold border bg-slate-50 text-slate-700 border-slate-200";
+                                    
+                                    const isActive = agent.status === 'Active';
+                                    const statusDotClass = isActive ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-slate-300";
+                                    const actionBtnClass = isActive ? "p-1.5 rounded-lg transition-colors text-slate-400 hover:text-red-600 hover:bg-red-50" : "p-1.5 rounded-lg transition-colors text-slate-400 hover:text-emerald-600 hover:bg-emerald-50";
+
+                                    return (
+                                        <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold uppercase">
+                                                        {agent.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-slate-900">{agent.name}</p>
+                                                        <p className="text-slate-500 text-xs">{agent.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={spanClass}>{agent.role}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={statusDotClass}></div>
+                                                    <span className="font-medium">{agent.status}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-slate-900">{agent.scans}</td>
+                                            <td className="px-6 py-4 text-slate-500">{agent.lastActive}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {!isAdmin && (
+                                                        <button 
+                                                            onClick={() => handleToggleStatus(agent.id)}
+                                                            disabled={togglingId === agent.id}
+                                                            className={actionBtnClass} 
+                                                            title={isActive ? 'Révoquer Accès' : 'Restaurer Accès'}
+                                                        >
+                                                            {togglingId === agent.id ? <Loader2 className="w-5 h-5 animate-spin"/> : (
+                                                                isActive ? (
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                                                ) : (
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                                )
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Simple Add Agent Modal (Mockup) */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
@@ -156,34 +283,55 @@ export default function AgentsPage() {
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Invite New Agent</h3>
-                        <p className="text-slate-500 text-sm mb-6">An invitation link will be sent to the email address provided.</p>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Inviter un Nouvel Agent</h3>
+                        <p className="text-slate-500 text-sm mb-6">L'accès et les mots de passe générés seront envoyés automatiquement par email.</p>
 
-                        <div className="space-y-4">
+                        <form onSubmit={handleAddAgent} className="space-y-4">
+                            {addError && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{addError}</div>}
+                            {addSuccess && <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg text-sm">{addSuccess}</div>}
+
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Full Name</label>
+                                <label className="text-sm font-medium text-slate-700">Nom Complet *</label>
                                 <input
                                     type="text"
+                                    required
+                                    value={addForm.fullName}
+                                    onChange={(e) => setAddForm({ ...addForm, fullName: e.target.value })}
                                     placeholder="e.g. Jane Smith"
                                     className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Email Address</label>
+                                <label className="text-sm font-medium text-slate-700">Adresse Email *</label>
                                 <input
                                     type="email"
+                                    required
+                                    value={addForm.email}
+                                    onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
                                     placeholder="e.g. jane@example.com"
                                     className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700">Rôle *</label>
+                                <select
+                                    value={addForm.role}
+                                    onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                                >
+                                    <option value="ORG_AGENT">Agent (Scan standard)</option>
+                                    <option value="OPERATOR">Opérateur (Responsable de zone)</option>
+                                </select>
+                            </div>
 
                             <button
-                                onClick={() => setIsAddModalOpen(false)}
-                                className="w-full mt-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                type="submit"
+                                disabled={adding}
+                                className="w-full mt-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                                Send Invitation
+                                {adding ? <Loader2 className="w-5 h-5 animate-spin"/> : "Envoyer l'Invitation"}
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             )}

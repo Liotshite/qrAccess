@@ -52,6 +52,13 @@ exports.login = async (req, res) => {
                 message: "Aucun compte trouvé pour cette adresse email."
             });
         }
+
+        if (user.deleted_at !== null) {
+            return res.status(403).json({
+                success: false,
+                message: "Accès refusé. Ce compte a été désactivé par un administrateur."
+            });
+        }
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) {
             return res.status(401).json({

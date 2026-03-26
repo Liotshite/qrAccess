@@ -55,3 +55,42 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
         return false;
     }
 };
+
+exports.sendAgentInvitation = async (toEmail, fullName, rawPassword) => {
+    try {
+        const transporter = await createTransporter();
+        const loginUrl = "http://localhost:3000/login"; // Replace with real URL eventually
+
+        const info = await transporter.sendMail({
+            from: '"QR Access Team" <noreply@qraccess.local>',
+            to: toEmail,
+            subject: "You've been invited as an Agent - QR Access",
+            text: `Hello ${fullName},\n\nYou have been added as an Agent for your organization.\nYour email: ${toEmail}\nYour password: ${rawPassword}\n\nPlease login at: ${loginUrl}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <h2 style="color: #2563eb;">Welcome to QR Access!</h2>
+                    <p>Hello <strong>${fullName}</strong>,</p>
+                    <p>An administrator has invited you to manage scanning and ticketing for your organization's events.</p>
+                    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 0; font-size: 14px;"><strong>Email:</strong> ${toEmail}</p>
+                        <p style="margin: 8px 0 0 0; font-size: 14px;"><strong>Temporary Password:</strong> ${rawPassword}</p>
+                    </div>
+                    <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; color: white; background-color: #2563eb; text-decoration: none; border-radius: 6px; font-weight: bold;">Login Now</a>
+                    <p style="margin-top: 25px; font-size: 12px; color: #6b7280;">Please keep your credentials secure.</p>
+                </div>
+            `,
+        });
+
+        console.log("=========================================");
+        console.log("📨 INVITATION EMAIL SENT");
+        console.log(`To: ${toEmail}`);
+        console.log("Preview message: %s", nodemailer.getTestMessageUrl(info));
+        console.log("=========================================");
+
+        return true;
+    } catch (error) {
+        console.error("Error sending agent invitation email:", error);
+        return false;
+    }
+};
+
