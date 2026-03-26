@@ -36,7 +36,6 @@ exports.generateQrForEvent = async (req, res) => {
 
         // Save the QR Code configuration to Prisma
         const qrRecord = await qrService.createQr({
-            information: `${fullName} - ${event.title}`,
             unique_token: uniqueToken,
             status: "active",
             usage_limit: usageLimit,
@@ -55,7 +54,7 @@ exports.generateQrForEvent = async (req, res) => {
         });
 
         const qrFilename = `qr_${uniqueToken}.png`;
-        const qrPath = path.join(__dirname, '../../statics/qrcodes', qrFilename);
+        const qrPath = path.join(__dirname, '../statics/qrcodes', qrFilename);
 
         // Ensure the directory exists
         const dir = path.dirname(qrPath);
