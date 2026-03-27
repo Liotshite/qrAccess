@@ -13,5 +13,6 @@ router.use(roleMiddleware(["SUPER_ADMIN", "ORG_ADMIN"]));
 router.get("/", agentController.getAgents);
 router.post("/", agentController.addAgent);
 router.put("/:id/toggle", agentController.toggleAgentStatus);
+router.delete("/:id", agentController.deleteAgent);
 
 module.exports = router;

@@ -40,7 +40,7 @@ exports.addAgent = async (req, res) => {
         }
 
         const orgId = req.user.org_id;
-        const { fullName, email, role } = req.body;
+        const { fullName, email, role, password } = req.body;
 
         if (!fullName || !email) {
             return res.status(400).json({ success: false, message: "Le nom et l'email sont requis." });
@@ -52,11 +52,14 @@ exports.addAgent = async (req, res) => {
             return res.status(400).json({ success: false, message: "Un utilisateur avec cet email existe déjà." });
         }
 
-        // Generate a secure random password
-        const rawPassword = crypto.randomBytes(8).toString('hex') + "!Aa1";
+        // Use provided password or generate a secure random one
+        const rawPassword = password || (crypto.randomBytes(8).toString('hex') + "!Aa1");
         const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
-        const assignedRole = role === "OPERATOR" ? "OPERATOR" : "ORG_AGENT";
+        // Determine role to assign
+        let assignedRole = "ORG_AGENT";
+        if (role === "ORG_ADMIN") assignedRole = "ORG_ADMIN";
+        else if (role === "OPERATOR") assignedRole = "OPERATOR";
 
         // Save agent
         const newAgent = await agentService.createAgent(orgId, fullName, email, hashedPassword, assignedRole);
@@ -100,5 +103,43 @@ exports.toggleAgentStatus = async (req, res) => {
     } catch (error) {
         console.error("Erreur toggleAgentStatus:", error);
         return res.status(500).json({ success: false, message: "Erreur serveur." });
+    }
+};
+
+exports.deleteAgent = async (req, res) => {
+    try {
+        if (!req.user || !req.user.org_id || req.user.role !== "ORG_ADMIN") {
+            return res.status(403).json({ success: false, message: "Accès refusé." });
+        }
+
+        const agentId = Number(req.params.id);
+        const orgId = req.user.org_id;
+
+        const agent = await agentService.getAgentByIdAndOrg(agentId, orgId);
+        if (!agent) {
+            return res.status(404).json({ success: false, message: "Agent introuvable." });
+        }
+
+        if (agent.role === "ORG_ADMIN") {
+            return res.status(403).json({ success: false, message: "Impossible de supprimer un administrateur." });
+        }
+
+        try {
+            await agentService.hardDeleteAgent(agentId, orgId);
+        } catch (dbError) {
+            // Handle foreign key constraint (e.g. if they have scan logs) (P2003 in Prisma)
+            if (dbError.code === 'P2003') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Cet agent ne peut pas être supprimé car il possède des journaux de scan (historique). Révoquez son accès à la place." 
+                });
+            }
+            throw dbError;
+        }
+
+        return res.status(200).json({ success: true, message: "Agent supprimé définitivement." });
+    } catch (error) {
+        console.error("Erreur deleteAgent:", error);
+        return res.status(500).json({ success: false, message: "Erreur serveur lors de la suppression." });
     }
 };

@@ -15,7 +15,7 @@ export default function AgentsPage() {
 
     // Modal state for adding a new agent
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [addForm, setAddForm] = useState({ fullName: "", email: "", role: "ORG_AGENT" });
+    const [addForm, setAddForm] = useState({ fullName: "", email: "", password: "", role: "ORG_AGENT" });
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState("");
     const [addSuccess, setAddSuccess] = useState("");
@@ -61,7 +61,7 @@ export default function AgentsPage() {
 
             if (data.success) {
                 setAddSuccess(data.message);
-                setAddForm({ fullName: "", email: "", role: "ORG_AGENT" });
+                setAddForm({ fullName: "", email: "", password: "", role: "ORG_AGENT" });
                 fetchAgents();
                 setTimeout(() => {
                     setIsAddModalOpen(false);
@@ -93,6 +93,27 @@ export default function AgentsPage() {
             }
         } catch (err) {
             alert("Erreur serveur.");
+        } finally {
+            setTogglingId(null);
+        }
+    };
+
+    const handleDeleteAgent = async (agentId) => {
+        if (!confirm("⚠️ Voulez-vous vraiment SUPPRIMER cet agent définitivement ? Cette action est irréversible.")) return;
+        setTogglingId(agentId);
+        try {
+            const res = await fetch(`http://localhost:5000/agents/${agentId}`, {
+                method: "DELETE",
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAgents(agents.filter(a => a.id !== agentId));
+            } else {
+                alert(data.message || "Erreur lors de la suppression.");
+            }
+        } catch (err) {
+            alert("Erreur réseau lors de la suppression.");
         } finally {
             setTogglingId(null);
         }
@@ -243,20 +264,30 @@ export default function AgentsPage() {
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     {!isAdmin && (
-                                                        <button 
-                                                            onClick={() => handleToggleStatus(agent.id)}
-                                                            disabled={togglingId === agent.id}
-                                                            className={actionBtnClass} 
-                                                            title={isActive ? 'Révoquer Accès' : 'Restaurer Accès'}
-                                                        >
-                                                            {togglingId === agent.id ? <Loader2 className="w-5 h-5 animate-spin"/> : (
-                                                                isActive ? (
-                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                                                ) : (
-                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                                )
-                                                            )}
-                                                        </button>
+                                                        <>
+                                                            <button 
+                                                                onClick={() => handleToggleStatus(agent.id)}
+                                                                disabled={togglingId === agent.id}
+                                                                className={actionBtnClass} 
+                                                                title={isActive ? 'Révoquer Accès' : 'Restaurer Accès'}
+                                                            >
+                                                                {togglingId === agent.id ? <Loader2 className="w-5 h-5 animate-spin"/> : (
+                                                                    isActive ? (
+                                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                                                    ) : (
+                                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                                    )
+                                                                )}
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDeleteAgent(agent.id)}
+                                                                disabled={togglingId === agent.id}
+                                                                className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-red-700 hover:bg-red-100" 
+                                                                title="Supprimer Définitivement"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </td>
@@ -313,14 +344,26 @@ export default function AgentsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700">Mot de Passe *</label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={addForm.password}
+                                    onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                                    placeholder="••••••••"
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                                />
+                            </div>
+                            <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-700">Rôle *</label>
                                 <select
                                     value={addForm.role}
                                     onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors text-sm font-medium"
                                 >
                                     <option value="ORG_AGENT">Agent (Scan standard)</option>
                                     <option value="OPERATOR">Opérateur (Responsable de zone)</option>
+                                    <option value="ORG_ADMIN">Administrateur (Gestion complète)</option>
                                 </select>
                             </div>
 
