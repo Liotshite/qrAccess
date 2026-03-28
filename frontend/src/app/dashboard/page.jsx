@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download, TrendingUp, Users } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
@@ -10,12 +11,28 @@ export default function Dashboard() {
         totalScans: 0,
         upcomingEvents: 0,
         nextEventTitle: "Aucun événement",
-        activeAgents: 0
+        activeAgents: 0,
+        scansByDay: [],
+        topAgents: [],
+        recentScans: []
     });
     const [userName, setUserName] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [toast, setToast] = useState({ show: false, message: "" });
 
+
+    const handleExport = async (format) => {
+        if (stats.totalScans === 0) {
+            setToast({ show: true, message: "Aucune donnée de scan n'est disponible pour l'exportation." });
+            setTimeout(() => setToast({ show: false, message: "" }), 4000);
+            return;
+        }
+        window.open(`http://localhost:5000/export/${format}`, '_blank');
+    };
+
+
+    
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
@@ -82,10 +99,27 @@ export default function Dashboard() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-bl-full blur-[60px] pointer-events-none -mr-10 -mt-10" />
                 <div className="absolute bottom-0 right-32 w-48 h-48 bg-blue-100/40 rounded-t-full blur-[50px] pointer-events-none" />
 
-                <div className="relative z-10 max-w-2xl">
-                    <h2 className="text-3xl font-bold text-slate-900 mb-2 mt-2">Welcome back, {userName || "Admin"} 👋</h2>
-                    <p className="text-slate-500 text-lg mb-8">Here's what's happening in your organization today.</p>
-
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h2 className="text-3xl font-bold text-slate-900 mb-2 mt-2">Welcome back, {userName || "Admin"} 👋</h2>
+                        <p className="text-slate-500 text-lg">Here's what's happening in your organization today.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={() => handleExport('csv')}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors border border-slate-200"
+                        >
+                            <Download className="w-4 h-4" />
+                            CSV
+                        </button>
+                        <button 
+                            onClick={() => handleExport('pdf')}
+                            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 font-semibold rounded-xl shadow-sm transition-colors border border-slate-200"
+                        >
+                            <Download className="w-4 h-4" />
+                            PDF
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -143,7 +177,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="flex items-center text-sm">
-                        <span className="text-slate-500 font-medium">Next: {stats.nextEventTitle}</span>
+                        <span className="text-slate-500 font-medium truncate">Next: {stats.nextEventTitle}</span>
                     </div>
                 </div>
 
@@ -160,6 +194,92 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center text-sm">
                         <span className="text-slate-500 font-medium">Out of 15 allowed</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Charts & Top Performance Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Line Chart */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900">Activity Overview</h3>
+                            <p className="text-sm text-slate-500">Total scans over the last 7 days</p>
+                        </div>
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <TrendingUp className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={stats.scansByDay}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#64748b', fontSize: 12 }} 
+                                    dy={10}
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#64748b', fontSize: 12 }} 
+                                />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="scans" 
+                                    stroke="#3b82f6" 
+                                    strokeWidth={4} 
+                                    dot={{ r: 6, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} 
+                                    activeDot={{ r: 8 }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Top Agents Panel */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900">Top Agents</h3>
+                            <p className="text-sm text-slate-500">Best performance by scans</p>
+                        </div>
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <Users className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="space-y-6">
+                        {stats.topAgents && stats.topAgents.length > 0 ? (
+                            stats.topAgents.map((agent, index) => (
+                                <div key={index} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${
+                                            index === 0 ? 'bg-amber-100 text-amber-700' : 
+                                            index === 1 ? 'bg-slate-100 text-slate-700' : 'bg-orange-50 text-orange-700'
+                                        }`}>
+                                            {index + 1}
+                                        </div>
+                                        <span className="font-semibold text-slate-900">{agent.name}</span>
+                                    </div>
+                                    <span className="px-3 py-1 bg-slate-50 text-slate-600 text-sm font-bold rounded-lg border border-slate-200">
+                                        {agent.count}
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-center text-slate-400 italic py-8">Aucun agent actif détecté.</p>
+                        )}
+                    </div>
+                    <div className="mt-8 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                            Ces données sont rafraîchies en temps réel à chaque scan autorisé ou refusé.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -185,11 +305,11 @@ export default function Dashboard() {
                             {stats.recentScans && stats.recentScans.length > 0 ? (
                                 stats.recentScans.map((scan) => (
                                     <tr key={scan.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-8 py-4 font-medium text-slate-900">{scan.code}</td>
+                                        <td className="px-8 py-4 font-medium text-slate-900 tracking-tight font-mono">{scan.code}</td>
                                         <td className="px-8 py-4">{scan.event}</td>
                                         <td className="px-8 py-4">{scan.agent}</td>
                                         <td className="px-8 py-4 text-slate-500">
-                                            {new Date(scan.time).toLocaleDateString()} {new Date(scan.time).toLocaleTimeString()}
+                                            {new Date(scan.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                         </td>
                                         <td className="px-8 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${scan.status === 'authorized'
@@ -212,6 +332,23 @@ export default function Dashboard() {
                     </table>
                 </div>
             </div>
+
+            {/* ── CUSTOM TOAST ── */}
+            {toast.show && (
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+                    <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-md">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <p className="text-sm font-bold tracking-tight">{toast.message}</p>
+                        <button onClick={() => setToast({ show: false, message: "" })} className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors">
+                            <Download className="w-4 h-4 rotate-45" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
+

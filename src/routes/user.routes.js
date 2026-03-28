@@ -35,6 +35,12 @@ router.post("/verify-email", userController.verifyEmail);
 // User Profile (Protected)
 // Page profile
 router.get("/profile", authMiddleware, userController.viewprofile);
+// User Settings (Protected)
+router.put("/profile", authMiddleware, userController.updateProfile);
+router.put("/password", authMiddleware, userController.updatePassword);
+router.get("/org", authMiddleware, userController.getOrganization);
+router.put("/org", authMiddleware, userController.updateOrganization);
+
 // Page log out
 router.get("/logout", authMiddleware, userController.logout);
 

@@ -20,8 +20,16 @@ export default function EventDetailPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [importing, setImporting] = useState(false);
+    const [importError, setImportError] = useState("");
+    const [importSuccess, setImportSuccess] = useState("");
     const [areas, setAreas] = useState([]);
     const [loadingAreas, setLoadingAreas] = useState(true);
+    const [toast, setToast] = useState({ show: false, message: "" });
+
+
 
     // QR Generation Form
     const [qrForm, setQrForm] = useState({
@@ -217,6 +225,63 @@ export default function EventDetailPage() {
         }
     };
 
+    const handleExport = (format) => {
+        const totalScanLogs = qrCodes.reduce((sum, qr) => sum + (qr.scans_count || 0), 0);
+        if (totalScanLogs === 0) {
+            setToast({ show: true, message: "Aucune donnée de scan n'est disponible pour cet événement." });
+            setTimeout(() => setToast({ show: false, message: "" }), 4000);
+            return;
+        }
+        window.open(`http://localhost:5000/export/${format}?event_id=${eventId}`, '_blank');
+    };
+
+
+
+    const handleImportCSV = async (e) => {
+        e.preventDefault();
+        if (!importFile) {
+            setImportError("Veuillez sélectionner un fichier.");
+            return;
+        }
+
+        setImporting(true);
+        setImportError("");
+        setImportSuccess("");
+
+        const formData = new FormData();
+        formData.append("file", importFile);
+
+        try {
+            const res = await fetch(`http://localhost:5000/qr/import/${eventId}`, {
+                method: "POST",
+                credentials: "include",
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                setImportSuccess(data.message);
+                setImportFile(null);
+                // Refresh list
+                const qrRes = await fetch(`http://localhost:5000/qr/event/${eventId}`, { credentials: "include" });
+                const qrData = await qrRes.json();
+                if (qrData.success) setQrCodes(qrData.qrs || []);
+                
+                setTimeout(() => {
+                    setShowImportModal(false);
+                    setImportSuccess("");
+                }, 2000);
+            } else {
+                setImportError(data.message || "Erreur lors de l'importation.");
+            }
+        } catch (err) {
+            setImportError("Erreur de connexion au serveur.");
+        } finally {
+            setImporting(false);
+        }
+    };
+
+
+
     const filteredQrs = qrCodes.filter(qr => {
         const matchesSearch = !searchQuery ||
             qr.holder?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -329,24 +394,53 @@ export default function EventDetailPage() {
                             </div>
                         </div>
                     </div>
-                    <button
-                        onClick={() => {
-                            setShowQrModal(true);
-                            setSuccessData(null);
-                            setQrError("");
-                            if (event && event.EventSchedules && event.EventSchedules.length > 0) {
-                                const schedules = event.EventSchedules;
-                                setQrForm(prev => ({
-                                    ...prev,
-                                    validFrom: new Date(schedules[0].start_date).toISOString().slice(0, 16),
-                                    validUntil: new Date(schedules[schedules.length - 1].end_date).toISOString().slice(0, 16)
-                                }));
-                            }
-                        }}
-                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm hover:shadow active:scale-95 transition-all text-sm flex-shrink-0"
-                    >
-                        <Plus className="w-5 h-5" /> Générer un QR
-                    </button>
+                    <div className="flex gap-2 flex-shrink-0">
+                        <button
+                            onClick={() => handleExport('csv')}
+                            className="inline-flex items-center justify-center p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border border-slate-200"
+                            title="Exporter en CSV"
+                        >
+                            <Download className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => handleExport('pdf')}
+                            className="inline-flex items-center justify-center p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all border border-slate-200"
+                            title="Exporter en PDF"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowImportModal(true);
+                                setImportError("");
+                                setImportSuccess("");
+                            }}
+                            className="inline-flex items-center justify-center p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all border border-slate-200"
+                            title="Importer CSV"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowQrModal(true);
+                                setSuccessData(null);
+                                setQrError("");
+                                if (event && event.EventSchedules && event.EventSchedules.length > 0) {
+                                    const schedules = event.EventSchedules;
+                                    setQrForm(prev => ({
+                                        ...prev,
+                                        validFrom: new Date(schedules[0].start_date).toISOString().slice(0, 16),
+                                        validUntil: new Date(schedules[schedules.length - 1].end_date).toISOString().slice(0, 16)
+                                    }));
+                                }
+                            }}
+                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm hover:shadow active:scale-95 transition-all text-sm"
+                        >
+                            <Plus className="w-5 h-5" /> Générer un QR
+                        </button>
+
+                    </div>
+
                 </div>
             </div>
 
@@ -767,6 +861,86 @@ export default function EventDetailPage() {
                     </div>
                 </div>
             )}
+            {/* ── MODAL: Import CSV ── */}
+            {showImportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
+                        <button onClick={() => setShowImportModal(false)} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                            <X className="w-5 h-5 text-slate-400" />
+                        </button>
+                        <h2 className="text-xl font-bold text-slate-900 mb-2">Importer des QR Codes</h2>
+                        <p className="text-sm text-slate-500 mb-6">Téléchargez un fichier CSV pour générer des codes QR en masse.</p>
+
+                        <form onSubmit={handleImportCSV} className="space-y-4">
+                            {importError && (
+                                <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">{importError}</div>
+                            )}
+                            {importSuccess && (
+                                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl text-sm border border-emerald-100 flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4" /> {importSuccess}
+                                </div>
+                            )}
+
+                            <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer relative">
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={(e) => setImportFile(e.target.files[0])}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <div className="space-y-2">
+                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto">
+                                        <Download className="w-6 h-6 rotate-180" />
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-900">{importFile ? importFile.name : "Cliquez ou glissez votre fichier CSV ici"}</p>
+                                    <p className="text-xs text-slate-400">Format .csv uniquement</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Instructions</p>
+                                <ul className="text-xs text-slate-600 space-y-1 list-disc pl-4">
+                                    <li>Utilisez le modèle CSV fourni ci-dessous.</li>
+                                    <li>Les colonnes obligatoires sont : <code className="bg-slate-200 px-1 rounded">fullName</code>.</li>
+                                    <li>Les types d'accès valides : <code className="bg-slate-200 px-1 rounded">single</code>, <code className="bg-slate-200 px-1 rounded">multi</code>, <code className="bg-slate-200 px-1 rounded">unlimited</code>.</li>
+                                </ul>
+                                <a
+                                    href="http://localhost:5000/templates/qr_template.csv"
+                                    download
+                                    className="mt-3 inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-bold text-xs"
+                                >
+                                    <Download className="w-3 h-3" /> Télécharger le modèle CSV
+                                </a>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={importing || !importFile}
+                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {importing ? <Loader2 className="w-5 h-5 animate-spin" /> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>}
+                                {importing ? "Importation..." : "Importer maintenant"}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* ── CUSTOM TOAST ── */}
+            {toast.show && (
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+                    <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-md">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <p className="text-sm font-bold tracking-tight">{toast.message}</p>
+                        <button onClick={() => setToast({ show: false, message: "" })} className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
+

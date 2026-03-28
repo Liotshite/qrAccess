@@ -236,3 +236,98 @@ exports.logout = async (req, res) => {
         message: "Déconnexion réussie."
     });
 };
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.user_id;
+        const { fullName, email } = req.body;
+
+        if (!fullName || !email) {
+            return res.status(400).json({ success: false, message: "Nom et email requis." });
+        }
+
+        // Check if email is already taken by another user
+        const existing = await userService.findByEmail(email);
+        if (existing && existing.user_id !== userId) {
+            return res.status(400).json({ success: false, message: "Cet email est déjà utilisé." });
+        }
+
+        const updated = await userService.updateUser(userId, {
+            full_name: fullName,
+            email: email
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Profil mis à jour avec succès.",
+            user: {
+                user_id: updated.user_id,
+                name: updated.full_name,
+                email: updated.email
+            }
+        });
+    } catch (error) {
+        console.error("Erreur updateProfile:", error);
+        return res.status(500).json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+};
+
+exports.updatePassword = async (req, res) => {
+    try {
+        const userId = req.user.user_id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: "Ancien et nouveau mot de passe requis." });
+        }
+
+        const user = await prisma.userQ.findUnique({ where: { user_id: userId } });
+        const valid = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!valid) {
+            return res.status(400).json({ success: false, message: "Ancien mot de passe incorrect." });
+        }
+
+        if (!isValidPassword(newPassword)) {
+            return res.status(400).json({ success: false, message: "Le nouveau mot de passe ne respecte pas les règles de sécurité." });
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await userService.updateUser(userId, { password_hash: hashed });
+
+        return res.status(200).json({ success: true, message: "Mot de passe modifié avec succès." });
+    } catch (error) {
+        console.error("Erreur updatePassword:", error);
+        return res.status(500).json({ success: false, message: "Erreur lors de la modification du mot de passe." });
+    }
+};
+
+exports.updateOrganization = async (req, res) => {
+    try {
+        if (req.user.role !== "ORG_ADMIN" && req.user.role !== "SUPER_ADMIN") {
+            return res.status(403).json({ success: false, message: "Droits insuffisants." });
+        }
+
+        const orgId = req.user.org_id;
+        const { name } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, message: "Nom de l'organisation requis." });
+        }
+
+        await userService.updateOrganization(orgId, { name: name });
+
+        return res.status(200).json({ success: true, message: "Organisation mise à jour." });
+    } catch (error) {
+        console.error("Erreur updateOrganization:", error);
+        return res.status(500).json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+};
+
+exports.getOrganization = async (req, res) => {
+    try {
+        const orgId = req.user.org_id;
+        const org = await userService.getOrganizationById(orgId);
+        return res.status(200).json({ success: true, organization: org });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Erreur serveur." });
+    }
+};

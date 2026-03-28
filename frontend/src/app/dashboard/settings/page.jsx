@@ -1,116 +1,338 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2, User, Building, Lock, Save, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function SettingsPage() {
+    const [user, setUser] = useState(null);
+    const [organization, setOrganization] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Profile form
+    const [profileForm, setProfileForm] = useState({ fullName: "", email: "" });
+    const [profileLoading, setProfileLoading] = useState(false);
+    const [profileStatus, setProfileStatus] = useState({ type: "", message: "" });
+
+    // Password form
+    const [pwdForm, setPwdForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    const [pwdLoading, setPwdLoading] = useState(false);
+    const [pwdStatus, setPwdStatus] = useState({ type: "", message: "" });
+
+    // Org form
+    const [orgForm, setOrgForm] = useState({ name: "" });
+    const [orgLoading, setOrgLoading] = useState(false);
+    const [orgStatus, setOrgStatus] = useState({ type: "", message: "" });
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            console.log("Fetching settings data...");
+            const [userRes, orgRes] = await Promise.all([
+                fetch("http://localhost:5000/user/profile", { credentials: "include" }),
+                fetch("http://localhost:5000/user/org", { credentials: "include" })
+            ]);
+
+            if (userRes.ok) {
+                const userData = await userRes.json();
+                console.log("User Data received:", userData);
+                if (userData.success && userData.user) {
+                    const u = userData.user;
+                    setUser(u);
+                    setProfileForm({ fullName: u.full_name || "", email: u.email || "" });
+                }
+            }
+
+            if (orgRes.ok) {
+                const orgData = await orgRes.json();
+                console.log("Org Data received:", orgData);
+                if (orgData.success && orgData.organization) {
+                    const o = orgData.organization;
+                    setOrganization(o);
+                    setOrgForm({ name: o.name || "" });
+                }
+            } else {
+                console.warn("Organization fetch failed with status:", orgRes.status);
+            }
+        } catch (err) {
+            console.error("Error fetching settings:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setProfileLoading(true);
+        setProfileStatus({ type: "", message: "" });
+
+        try {
+            const res = await fetch("http://localhost:5000/user/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(profileForm),
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setProfileStatus({ type: "success", message: data.message });
+            } else {
+                setProfileStatus({ type: "error", message: data.message });
+            }
+        } catch (err) {
+            setProfileStatus({ type: "error", message: "Erreur réseau." });
+        } finally {
+            setProfileLoading(false);
+        }
+    };
+
+    const handleUpdatePassword = async (e) => {
+        e.preventDefault();
+        if (pwdForm.newPassword !== pwdForm.confirmPassword) {
+            setPwdStatus({ type: "error", message: "Les mots de passe ne correspondent pas." });
+            return;
+        }
+
+        setPwdLoading(true);
+        setPwdStatus({ type: "", message: "" });
+
+        try {
+            const res = await fetch("http://localhost:5000/user/password", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentPassword: pwdForm.currentPassword,
+                    newPassword: pwdForm.newPassword
+                }),
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setPwdStatus({ type: "success", message: data.message });
+                setPwdForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            } else {
+                setPwdStatus({ type: "error", message: data.message });
+            }
+        } catch (err) {
+            setPwdStatus({ type: "error", message: "Erreur réseau." });
+        } finally {
+            setPwdLoading(false);
+        }
+    };
+
+    const handleUpdateOrg = async (e) => {
+        e.preventDefault();
+        setOrgLoading(true);
+        setOrgStatus({ type: "", message: "" });
+
+        try {
+            const res = await fetch("http://localhost:5000/user/org", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orgForm),
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                setOrgStatus({ type: "success", message: data.message });
+            } else {
+                setOrgStatus({ type: "error", message: data.message });
+            }
+        } catch (err) {
+            setOrgStatus({ type: "error", message: "Erreur réseau." });
+        } finally {
+            setOrgLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex h-[80vh] items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+        );
+    }
+
+    const isAdmin = user?.role === 'ORG_ADMIN' || user?.role === 'SUPER_ADMIN';
+
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            {/* Header */}
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Organization Settings</h1>
-                <p className="text-slate-500 text-sm mt-1">Manage your account details and platform preferences.</p>
+                <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
+                <p className="text-slate-500 mt-1">Gérez vos informations personnelles et celles de votre organisation.</p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                {/* Profile Section */}
-                <div className="p-6 sm:p-8 border-b border-slate-100">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-6">Profile Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Sidebar Navigation (Visual only for now) */}
+                <div className="space-y-1">
+                    <button className="w-full flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-medium text-sm border border-blue-100/50">
+                        <User className="w-4 h-4" /> Profil & Sécurité
+                    </button>
+                    {isAdmin && (
+                        <button className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl font-medium text-sm transition-colors">
+                            <Building className="w-4 h-4" /> Organisation
+                        </button>
+                    )}
+                </div>
 
-                    <div className="flex flex-col sm:flex-row gap-8 items-start">
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-3xl shadow-sm border-2 border-white ring-1 ring-slate-100">
-                                LD
+                {/* Main Settings Area */}
+                <div className="md:col-span-2 space-y-8">
+                    
+                    {/* Mon Profil Section */}
+                    <section className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <User className="w-5 h-5" />
                             </div>
-                            <button className="text-sm font-medium text-blue-600 hover:text-blue-700">Change Photo</button>
+                            <h2 className="font-bold text-slate-900">Informations Personnelles</h2>
                         </div>
+                        <div className="p-6 space-y-6">
+                            <form onSubmit={handleUpdateProfile} className="space-y-4">
+                                {profileStatus.message && (
+                                    <div className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                                        profileStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                    }`}>
+                                        {profileStatus.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                                        {profileStatus.message}
+                                    </div>
+                                )}
+                                
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Nom Complet</label>
+                                        <input
+                                            type="text"
+                                            value={profileForm.fullName}
+                                            onChange={(e) => setProfileForm({...profileForm, fullName: e.target.value})}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Adresse Email</label>
+                                        <input
+                                            type="email"
+                                            value={profileForm.email}
+                                            onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={profileLoading}
+                                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 text-sm"
+                                >
+                                    {profileLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Sauvegarder les modifications
+                                </button>
+                            </form>
+                        </div>
+                    </section>
 
-                        <div className="flex-1 w-full space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Sécurité / Mot de passe */}
+                    <section className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center">
+                                <Lock className="w-5 h-5" />
+                            </div>
+                            <h2 className="font-bold text-slate-900">Mot de Passe</h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <form onSubmit={handleUpdatePassword} className="space-y-4">
+                                {pwdStatus.message && (
+                                    <div className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                                        pwdStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                    }`}>
+                                        {pwdStatus.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                                        {pwdStatus.message}
+                                    </div>
+                                )}
+                                
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">First Name</label>
+                                    <label className="text-sm font-medium text-slate-700">Mot de passe actuel</label>
                                     <input
-                                        type="text"
-                                        defaultValue="Lionel"
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                                        type="password"
+                                        value={pwdForm.currentPassword}
+                                        onChange={(e) => setPwdForm({...pwdForm, currentPassword: e.target.value})}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Last Name</label>
-                                    <input
-                                        type="text"
-                                        defaultValue="Doe"
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Nouveau mot de passe</label>
+                                        <input
+                                            type="password"
+                                            value={pwdForm.newPassword}
+                                            onChange={(e) => setPwdForm({...pwdForm, newPassword: e.target.value})}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Confirmer</label>
+                                        <input
+                                            type="password"
+                                            value={pwdForm.confirmPassword}
+                                            onChange={(e) => setPwdForm({...pwdForm, confirmPassword: e.target.value})}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Email Address</label>
-                                <input
-                                    type="email"
-                                    defaultValue="lionel@example.com"
-                                    disabled
-                                    className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed"
-                                />
-                                <p className="text-xs text-slate-500">To change your email address, please contact support.</p>
-                            </div>
+                                <button
+                                    type="submit"
+                                    disabled={pwdLoading}
+                                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-black text-white font-medium rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 text-sm"
+                                >
+                                    {pwdLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                                    Changer le mot de passe
+                                </button>
+                            </form>
                         </div>
-                    </div>
-                </div>
+                    </section>
 
-                {/* Organization Details */}
-                <div className="p-6 sm:p-8 border-b border-slate-100">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-6">Organization Details</h2>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Organization Name</label>
-                            <input
-                                type="text"
-                                defaultValue="Acme Corp"
-                                className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors max-w-md"
-                            />
-                        </div>
-                        <div className="space-y-2 pt-2">
-                            <label className="text-sm font-medium text-slate-700">Plan</label>
-                            <div className="flex items-center gap-4 max-w-md p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                                <div className="flex-1">
-                                    <p className="font-semibold text-blue-900">Pro Plan</p>
-                                    <p className="text-xs text-blue-700">Billed annually, next charge Oct 2026</p>
+                    {/* Organisation Section */}
+                    {isAdmin && (
+                        <section className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden border-l-4 border-l-blue-500">
+                            <div className="p-6 border-b border-slate-100 flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <Building className="w-5 h-5" />
                                 </div>
-                                <button className="px-4 py-2 bg-white border border-blue-200 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-50 transition-colors">Upgrade</button>
+                                <h2 className="font-bold text-slate-900">Organisation</h2>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                            <div className="p-6 space-y-6">
+                                <form onSubmit={handleUpdateOrg} className="space-y-4">
+                                    {orgStatus.message && (
+                                        <div className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                                            orgStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                        }`}>
+                                            {orgStatus.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                                            {orgStatus.message}
+                                        </div>
+                                    )}
+                                    
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Nom de l'Organisation</label>
+                                        <input
+                                            type="text"
+                                            value={orgForm.name}
+                                            onChange={(e) => setOrgForm({ name: e.target.value })}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={orgLoading}
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 text-sm"
+                                    >
+                                        {orgLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                        Mettre à jour l'organisation
+                                    </button>
+                                </form>
+                            </div>
+                        </section>
+                    )}
 
-                {/* Security Section */}
-                <div className="p-6 sm:p-8">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-6">Security</h2>
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="font-medium text-slate-900">Change Password</p>
-                                <p className="text-sm text-slate-500">Update your password to keep your account secure.</p>
-                            </div>
-                            <button className="px-4 py-2 border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm">Update</button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
-                                <p className="text-sm text-slate-500">Add an extra layer of security to your account.</p>
-                            </div>
-                            <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full border border-slate-200">Not Enabled</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Save Banner */}
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                    <button className="px-6 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-xl shadow-sm transition-all text-sm">
-                        Cancel
-                    </button>
-                    <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm active:scale-95 transition-all text-sm">
-                        Save Changes
-                    </button>
                 </div>
             </div>
         </div>

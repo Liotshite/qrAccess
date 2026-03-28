@@ -72,27 +72,67 @@ exports.getOverviewStats = async (req, res) => {
             }
         });
 
-        // 5. Recent Scans (last 5)
-        const recentScans = await prisma.scanLog.findMany({
-            where: {
-                qr_code: {
-                    event: { org_id: orgId }
+        // 6. Scans per Day (Last 7 Days)
+        const scansByDay = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            const count = await prisma.scanLog.count({
+                where: {
+                    qr_code: { event: { org_id: orgId } },
+                    scanned_at: {
+                        gte: date,
+                        lt: nextDay
+                    }
                 }
-            },
+            });
+
+            scansByDay.push({
+                name: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+                fullDate: date.toLocaleDateString('fr-FR'),
+                scans: count
+            });
+        }
+
+        // 7. Top Agents by scan count
+        const topAgentsRaw = await prisma.scanLog.groupBy({
+            by: ['scanned_by_id'],
+            where: { qr_code: { event: { org_id: orgId } } },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 3
+        });
+
+        const topAgents = await Promise.all(topAgentsRaw.map(async (item) => {
+            const agent = await prisma.userQ.findUnique({
+                where: { user_id: item.scanned_by_id },
+                select: { full_name: true }
+            });
+            return {
+                name: agent.full_name,
+                count: item._count.id
+            };
+        }));
+
+        // 5. Recent Scans (last 5) - we need to fetch them again as the previous block replaced it
+        const recentScans = await prisma.scanLog.findMany({
+            where: { qr_code: { event: { org_id: orgId } } },
             take: 5,
-            orderBy: {
-                scanned_at: 'desc'
-            },
+            orderBy: { scanned_at: 'desc' },
             include: {
                 qr_code: { select: { unique_token: true, event: { select: { title: true } } } },
                 scanned_by: { select: { full_name: true } }
             }
         });
 
-        // Format recent scans for easy frontend consumption
         const formattedScans = recentScans.map(scan => ({
             id: scan.id,
-            code: scan.qr_code.unique_token.substring(0, 8), // Short preview
+            code: scan.qr_code.unique_token.substring(0, 8),
             event: scan.qr_code.event.title,
             agent: scan.scanned_by.full_name,
             time: scan.scanned_at,
@@ -107,9 +147,13 @@ exports.getOverviewStats = async (req, res) => {
                 upcomingEvents: upcomingEventsCount,
                 nextEventTitle: nextEvent ? nextEvent.title : "Aucun événement",
                 activeAgents: activeAgentsCount,
-                recentScans: formattedScans
+                recentScans: formattedScans,
+                scansByDay: scansByDay,
+                topAgents: topAgents
             }
         });
+
+
 
     } catch (error) {
         console.error("Erreur lors de la récupération des stats du Dashboard: ", error);

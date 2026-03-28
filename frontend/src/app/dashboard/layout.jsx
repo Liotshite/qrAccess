@@ -28,6 +28,7 @@ export default function DashboardLayout({ children }) {
             { name: "Events", href: "/dashboard/events", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
             { name: "Agents", href: "/dashboard/agents", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
             { name: "Areas", href: "/dashboard/areas", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
+            { name: "Scanner Mobile", href: "/scan", icon: "M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z", special: true },
             { name: "Settings", href: "/dashboard/settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
         ];
         if (userProfile && userProfile.role !== "SUPER_ADMIN" && userProfile.role !== "ORG_ADMIN") {
@@ -62,15 +63,20 @@ export default function DashboardLayout({ children }) {
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium text-sm ${isActive
-                                    ? "bg-blue-50 text-blue-700 border border-blue-100/50"
-                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium text-sm transition-colors ${isActive
+                                    ? "bg-blue-50 text-blue-700 border border-blue-100/50 shadow-sm"
+                                    : item.special 
+                                        ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                     }`}
                             >
-                                <svg className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className={`w-5 h-5 ${isActive ? 'text-blue-600' : (item.special ? 'text-white' : 'text-slate-400')}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
                                 </svg>
-                                {item.name}
+                                <span>{item.name}</span>
+                                {item.special && !isActive && (
+                                    <span className="ml-auto flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                                )}
                             </Link>
                         );
                     })}

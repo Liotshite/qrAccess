@@ -41,6 +41,7 @@ const qrRoutes = require("./routes/qr.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const areaRoutes = require("./routes/area.routes");
 const agentRoutes = require("./routes/agent.routes");
+const exportRoutes = require("./routes/export.routes");
 
 // ===== Utilisation des routes =====
 // On préfixe toutes les routes utilisateurs par /user (/user/login, /user/signup, etc.)
@@ -52,6 +53,7 @@ app.use("/qr", qrRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/areas", areaRoutes);
 app.use("/agents", agentRoutes);
+app.use("/export", exportRoutes);
 
 
 module.exports = app;

@@ -2,6 +2,7 @@ const QRCode = require("qrcode");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const csv = require("csv-parser");
 const eventService = require('../services/event.service');
 const qrService = require('../services/qr.service');
 
@@ -191,4 +192,90 @@ exports.revokeQr = async (req, res) => {
     }
 };
 
+exports.importQrsFromCSV = async (req, res) => {
+    try {
+        if (!req.user || !req.user.org_id) {
+            return res.status(401).json({ success: false, message: "Non autorisé" });
+        }
 
+        const orgId = req.user.org_id;
+        const eventId = Number(req.params.event_id);
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ success: false, message: "Fichier CSV requis" });
+        }
+
+        const event = await eventService.findById(orgId, eventId);
+        if (!event) {
+            return res.status(404).json({ success: false, message: "Événement non trouvé" });
+        }
+
+        const results = [];
+        fs.createReadStream(file.path)
+            .pipe(csv())
+            .on('data', (data) => results.push(data))
+            .on('end', async () => {
+                const createdQrs = [];
+                for (const row of results) {
+                    const fullName = row.fullName || row.name || row.nom;
+                    const email = row.email;
+                    const phone = row.phone || row.telephone;
+                    const accessType = row.accessType || 'single';
+                    const limit = Number(row.limit) || 1;
+                    const level = Number(row.level) || 1;
+                    const validFrom = row.validFrom ? new Date(row.validFrom) : null;
+                    const validUntil = row.validUntil ? new Date(row.validUntil) : null;
+
+                    if (!fullName) continue;
+
+                    const uniqueToken = crypto.randomUUID();
+                    let usageLimit = 1;
+                    if (accessType === 'multi') usageLimit = limit;
+                    if (accessType === 'unlimited') usageLimit = 999999;
+
+                    const qrRecord = await qrService.createQr({
+                        unique_token: uniqueToken,
+                        status: "active",
+                        usage_limit: usageLimit,
+                        valid_from: validFrom,
+                        valid_until: validUntil,
+                        level: level,
+                        holder_name: fullName,
+                        holder_email: email || null,
+                        holder_phone: phone || null,
+                        event_id: eventId
+                    });
+
+                    // Generate physical QR
+                    const qrData = JSON.stringify({ t: uniqueToken, e: eventId });
+                    const qrFilename = `qr_${uniqueToken}.png`;
+                    const qrPath = path.join(__dirname, '../statics/qrcodes', qrFilename);
+                    
+                    if (!fs.existsSync(path.dirname(qrPath))) fs.mkdirSync(path.dirname(qrPath), { recursive: true });
+                    
+                    await QRCode.toFile(qrPath, qrData, {
+                        errorCorrectionLevel: 'H',
+                        margin: 2,
+                        width: 400
+                    });
+
+                    createdQrs.push(qrRecord);
+                }
+
+                // Cleanup uploaded file
+                fs.unlinkSync(file.path);
+
+                return res.status(201).json({
+                    success: true,
+                    message: `${createdQrs.length} QR Codes importés avec succès`,
+                    count: createdQrs.length
+                });
+            });
+
+    } catch (error) {
+        console.error("Error importing CSV:", error);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(500).json({ success: false, message: "Erreur lors de l'importation" });
+    }
+};
