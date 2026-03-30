@@ -5,12 +5,18 @@ const cookieParser = require("cookie-parser");
 
 const cors = require('cors');
 
+const helmet = require('helmet');
+
 // ===== Configurer CORS pour React =====
 const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000'];
 
+app.use(helmet({
+    crossOriginResourcePolicy: false, // Permet le chargement d'images de QR codes depuis le frontend
+    contentSecurityPolicy: false // Pour le dev local, sinon à configurer finement en prod
+}));
+
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
             var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
@@ -18,13 +24,16 @@ app.use(cors({
         }
         return callback(null, true);
     },
-    credentials: true // Très important puisque tu utilises cookie-parser
+    credentials: true
 }));
 
 // ===== Middlewares globaux =====
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
+// Configuration des cookies sécurisée si en HTTPS
+app.use(cookieParser(process.env.JWT_SECRET));
+
 
 
 

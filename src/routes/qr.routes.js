@@ -5,7 +5,18 @@ const qrVerifyController = require("../controllers/api.qr_verify.controller");
 const authMiddleware = require('../middleware/authMiddleware');
 
 const multer = require('multer');
-const upload = multer({ dest: 'tmp/uploads/' });
+const upload = multer({ 
+    dest: 'tmp/uploads/',
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Format de fichier non supporté. Veuillez envoyer un CSV.'), false);
+        }
+    }
+});
+
 
 // Vérification d'un QR code (Scanner)
 router.post("/verify", authMiddleware, qrVerifyController.verifyScan);

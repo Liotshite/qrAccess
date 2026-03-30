@@ -14,13 +14,22 @@ QR Access 2 est une plateforme moderne et sécurisée pour la gestion d'événem
     - Exportation des historiques de scan en **CSV** et **PDF**.
 - **Interface Scanner Dédiée** : Une interface fluide pour les agents de terrain.
 
-## Installation
+## Installation & Sécurité Prod
+
+### HTTPS & TLS
+Pour une utilisation en production et pour permettre le scan via mobile :
+1. **SSL Termination** : Il est recommandé d'utiliser un proxy inverse comme **Nginx** ou un service de Cloud (AWS ALB, Vercel, Heroku) pour gérer le certificat SSL (Let's Encrypt).
+2. **Configuration Node** : Le code est déjà prêt pour le HTTPS. Les cookies de session sont configurés avec le flag `secure: true` automatiquement lorsque `NODE_ENV=production`.
+3. **Sécurité Headers** : L'application utilise `helmet` pour protéger contre les vulnérabilités courantes (XSS, Clickjacking, etc.).
 
 ### Backend
 1. `npm install`
-2. Configurez le fichier `.env` avec vos accès base de données (Prisma) et SMTP.
+2. Configurez le fichier `.env` :
+   - `JWT_SECRET` : Une clé longue et complexe.
+   - `NODE_ENV` : Mettre à `production` en déploiement.
 3. `npx prisma db push`
-4. `npm start` (Tourne sur le port 5000 par défaut)
+4. `npm start`
+
 
 ### Frontend
 1. `cd frontend`
@@ -33,4 +42,4 @@ QR Access 2 est une plateforme moderne et sécurisée pour la gestion d'événem
 - **QR Engine** : node-qrcode.
 
 ## Auteur
-Lionel
+Lionel TSHITENGE KALEU
