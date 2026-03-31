@@ -1,0 +1,18 @@
+{
+  "name": "QR Access 2",
+  "short_name": "QR Access",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Système de Gestion d'Accès par Code QR",
+  "orientation": "portrait"
+}
