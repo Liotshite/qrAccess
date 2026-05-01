@@ -8,7 +8,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 
 // ===== Configurer CORS pour React =====
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000'];
+const allowedOrigins = ['https://qr-access-rust.vercel.app'];
 
 app.use(helmet({
     crossOriginResourcePolicy: false, // Permet le chargement d'images de QR codes depuis le frontend
