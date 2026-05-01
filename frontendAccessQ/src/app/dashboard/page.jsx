@@ -28,7 +28,7 @@ export default function Dashboard() {
             setTimeout(() => setToast({ show: false, message: "" }), 4000);
             return;
         }
-        window.open(`http://localhost:5000/export/${format}`, '_blank');
+        window.open(`${process.env.NEXT_PUBLIC_API_URL}/export/${format}`, '_blank');
     };
 
 
@@ -37,7 +37,7 @@ export default function Dashboard() {
         const fetchDashboardData = async () => {
             try {
                 // Fetch User Profile to get Name
-                const profileRes = await fetch("http://localhost:5000/user/profile", {
+                const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include"
@@ -50,7 +50,7 @@ export default function Dashboard() {
                 }
 
                 // Fetch Dashboard Stats
-                const statsRes = await fetch("http://localhost:5000/dashboard/stats", {
+                const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include"

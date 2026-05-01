@@ -28,7 +28,7 @@ export default function AgentsPage() {
 
     const fetchAgents = async () => {
         try {
-            const res = await fetch("http://localhost:5000/agents", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agents`, {
                 credentials: "include"
             });
             const data = await res.json();
@@ -51,7 +51,7 @@ export default function AgentsPage() {
         setAdding(true);
 
         try {
-            const res = await fetch("http://localhost:5000/agents", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agents`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -81,7 +81,7 @@ export default function AgentsPage() {
         if (!confirm("Voulez-vous modifier le statut de cet agent ?")) return;
         setTogglingId(agentId);
         try {
-            const res = await fetch(`http://localhost:5000/agents/${agentId}/toggle`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agents/${agentId}/toggle`, {
                 method: "PUT",
                 credentials: "include"
             });
@@ -102,7 +102,7 @@ export default function AgentsPage() {
         if (!confirm("⚠️ Voulez-vous vraiment SUPPRIMER cet agent définitivement ? Cette action est irréversible.")) return;
         setTogglingId(agentId);
         try {
-            const res = await fetch(`http://localhost:5000/agents/${agentId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agents/${agentId}`, {
                 method: "DELETE",
                 credentials: "include"
             });

@@ -12,7 +12,7 @@ export default function DashboardLayout({ children }) {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await fetch("http://localhost:5000/user/profile", { credentials: "include" });
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, { credentials: "include" });
                 const data = await res.json();
                 if (data.success) setUserProfile(data.user);
             } catch (err) {

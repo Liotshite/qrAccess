@@ -22,7 +22,7 @@ export default function NewEventPage() {
     useEffect(() => {
         const fetchAreas = async () => {
             try {
-                const res = await fetch("http://localhost:5000/areas", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/areas`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include"
@@ -77,7 +77,7 @@ export default function NewEventPage() {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:5000/events", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

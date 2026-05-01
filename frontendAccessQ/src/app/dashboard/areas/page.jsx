@@ -13,7 +13,7 @@ export default function AreasPage() {
 
     const fetchAreas = async () => {
         try {
-            const res = await fetch("http://localhost:5000/areas", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/areas`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -39,8 +39,8 @@ export default function AreasPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const url = editingArea
-            ? `http://localhost:5000/areas/${editingArea.area_id}`
-            : "http://localhost:5000/areas";
+            ? `${process.env.NEXT_PUBLIC_API_URL}/areas/${editingArea.area_id}`
+            : `${process.env.NEXT_PUBLIC_API_URL}/areas`;
         const method = editingArea ? "PUT" : "POST";
 
         try {
@@ -65,7 +65,7 @@ export default function AreasPage() {
     const handleDelete = async (id) => {
         if (!confirm("Êtes-vous sûr de vouloir supprimer cette zone ?")) return;
         try {
-            const res = await fetch(`http://localhost:5000/areas/${id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/areas/${id}`, {
                 method: "DELETE",
                 credentials: "include"
             });

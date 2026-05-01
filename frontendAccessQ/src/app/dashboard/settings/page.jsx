@@ -31,8 +31,8 @@ export default function SettingsPage() {
         try {
             console.log("Fetching settings data...");
             const [userRes, orgRes] = await Promise.all([
-                fetch("http://localhost:5000/user/profile", { credentials: "include" }),
-                fetch("http://localhost:5000/user/org", { credentials: "include" })
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, { credentials: "include" }),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/org`, { credentials: "include" })
             ]);
 
             if (userRes.ok) {
@@ -69,7 +69,7 @@ export default function SettingsPage() {
         setProfileStatus({ type: "", message: "" });
 
         try {
-            const res = await fetch("http://localhost:5000/user/profile", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(profileForm),
@@ -99,7 +99,7 @@ export default function SettingsPage() {
         setPwdStatus({ type: "", message: "" });
 
         try {
-            const res = await fetch("http://localhost:5000/user/password", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/password`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -128,7 +128,7 @@ export default function SettingsPage() {
         setOrgStatus({ type: "", message: "" });
 
         try {
-            const res = await fetch("http://localhost:5000/user/org", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/org`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(orgForm),

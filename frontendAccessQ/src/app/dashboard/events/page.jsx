@@ -17,7 +17,7 @@ export default function EventsPage() {
     useEffect(() => {
         const fetchProfileAndEvents = async () => {
             try {
-                const profileRes = await fetch("http://localhost:5000/user/profile", { credentials: "include" });
+                const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, { credentials: "include" });
                 const profileData = await profileRes.json();
                 if (profileData.success) {
                     setUserRole(profileData.user.role);
@@ -26,7 +26,7 @@ export default function EventsPage() {
                 console.error("Error fetching profile:", err);
             }
             try {
-                const res = await fetch("http://localhost:5000/events", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include"

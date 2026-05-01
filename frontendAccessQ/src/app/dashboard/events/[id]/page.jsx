@@ -62,7 +62,7 @@ export default function EventDetailPage() {
 
     const fetchAreas = async () => {
         try {
-            const res = await fetch("http://localhost:5000/areas", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/areas`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -83,8 +83,8 @@ export default function EventDetailPage() {
         setError("");
         try {
             const [eventRes, qrRes] = await Promise.all([
-                fetch(`http://localhost:5000/events/${eventId}`, { credentials: "include" }),
-                fetch(`http://localhost:5000/qr/event/${eventId}`, { credentials: "include" })
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}`, { credentials: "include" }),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/qr/event/${eventId}`, { credentials: "include" })
             ]);
             const eventData = await eventRes.json();
             const qrData = await qrRes.json();
@@ -134,7 +134,7 @@ export default function EventDetailPage() {
         }
 
         try {
-            const res = await fetch(`http://localhost:5000/events/${eventId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -157,7 +157,7 @@ export default function EventDetailPage() {
     const handleDeleteEvent = async () => {
         setIsDeleting(true);
         try {
-            const res = await fetch(`http://localhost:5000/events/${eventId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}`, {
                 method: "DELETE",
                 credentials: "include"
             });
@@ -180,7 +180,7 @@ export default function EventDetailPage() {
         setQrError("");
         setGeneratingQr(true);
         try {
-            const res = await fetch(`http://localhost:5000/qr/generate/${eventId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qr/generate/${eventId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -191,7 +191,7 @@ export default function EventDetailPage() {
                 setShowQrModal(false);
                 setQrForm({ ...qrForm, fullName: "", email: "", phone: "", level: "1" });
                 // Refresh QR list
-                const qrRes = await fetch(`http://localhost:5000/qr/event/${eventId}`, { credentials: "include" });
+                const qrRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qr/event/${eventId}`, { credentials: "include" });
                 const qrData = await qrRes.json();
                 if (qrData.success) setQrCodes(qrData.qrs || []);
             } else {
@@ -208,7 +208,7 @@ export default function EventDetailPage() {
         if (!confirm("Voulez-vous vraiment révoquer ce QR Code ?")) return;
         setRevokingId(id);
         try {
-            const res = await fetch(`http://localhost:5000/qr/revoke/${id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qr/revoke/${id}`, {
                 method: "PUT",
                 credentials: "include"
             });
@@ -232,7 +232,7 @@ export default function EventDetailPage() {
             setTimeout(() => setToast({ show: false, message: "" }), 4000);
             return;
         }
-        window.open(`http://localhost:5000/export/${format}?event_id=${eventId}`, '_blank');
+        window.open(`${process.env.NEXT_PUBLIC_API_URL}/export/${format}?event_id=${eventId}`, '_blank');
     };
 
 
@@ -252,7 +252,7 @@ export default function EventDetailPage() {
         formData.append("file", importFile);
 
         try {
-            const res = await fetch(`http://localhost:5000/qr/import/${eventId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qr/import/${eventId}`, {
                 method: "POST",
                 credentials: "include",
                 body: formData
@@ -262,7 +262,7 @@ export default function EventDetailPage() {
                 setImportSuccess(data.message);
                 setImportFile(null);
                 // Refresh list
-                const qrRes = await fetch(`http://localhost:5000/qr/event/${eventId}`, { credentials: "include" });
+                const qrRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qr/event/${eventId}`, { credentials: "include" });
                 const qrData = await qrRes.json();
                 if (qrData.success) setQrCodes(qrData.qrs || []);
                 
@@ -549,7 +549,7 @@ export default function EventDetailPage() {
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                                 </button>
                                                 <a
-                                                    href={`http://localhost:5000/qrcodes/qr_${qr.token}.png`}
+                                                    href={`${process.env.NEXT_PUBLIC_API_URL}/qrcodes/qr_${qr.token}.png`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors inline-block"
@@ -714,7 +714,7 @@ export default function EventDetailPage() {
                         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Détails du Ticket</h3>
 
                         <div className="w-full flex flex-col items-center">
-                            <img src={`http://localhost:5000/qrcodes/qr_${selectedQr.token}.png`} alt="QR Code" className="w-48 h-48 rounded-2xl border border-slate-100 p-2 shadow-inner bg-slate-50 mb-6 object-contain" />
+                            <img src={`${process.env.NEXT_PUBLIC_API_URL}/qrcodes/qr_${selectedQr.token}.png`} alt="QR Code" className="w-48 h-48 rounded-2xl border border-slate-100 p-2 shadow-inner bg-slate-50 mb-6 object-contain" />
 
                             <div className="w-full space-y-4 text-left bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <div>
@@ -905,7 +905,7 @@ export default function EventDetailPage() {
                                     <li>Les types d'accès valides : <code className="bg-slate-200 px-1 rounded">single</code>, <code className="bg-slate-200 px-1 rounded">multi</code>, <code className="bg-slate-200 px-1 rounded">unlimited</code>.</li>
                                 </ul>
                                 <a
-                                    href="http://localhost:5000/templates/qr_template.csv"
+                                    href={`${process.env.NEXT_PUBLIC_API_URL}/templates/qr_template.csv`}
                                     download
                                     className="mt-3 inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-bold text-xs"
                                 >
