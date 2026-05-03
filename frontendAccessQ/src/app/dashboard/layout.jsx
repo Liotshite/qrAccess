@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }) {
                 <div className="h-20 flex items-center px-6 border-b border-slate-100">
                     <Link href="/dashboard" className="flex items-center gap-3">
                         <img
-                            src="/logo/SI_logo-removebg-preview.png"
+                            src="/logo/access_logo.png"
                             alt="QR Access Logo"
                             className="w-8 h-8 drop-shadow-sm"
                         />
@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }) {
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium text-sm transition-colors ${isActive
                                     ? "bg-blue-50 text-blue-700 border border-blue-100/50 shadow-sm"
-                                    : item.special 
+                                    : item.special
                                         ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20"
                                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                     }`}
@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }) {
                 <header className="lg:hidden h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-20 shadow-sm">
                     <Link href="/dashboard" className="flex items-center gap-2">
                         <img
-                            src="/logo/SI_logo-removebg-preview.png"
+                            src="/logo/access_logo.png"
                             alt="QR Access Logo"
                             className="w-6 h-6"
                         />

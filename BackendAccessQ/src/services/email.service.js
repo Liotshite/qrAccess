@@ -1,18 +1,14 @@
 const nodemailer = require("nodemailer");
 
-// Using Ethereal Email for testing (fake SMTP service by Nodemailer)
-// It catches all emails and provides a URL to view them without actually sending to real addresses.
+// Using real SMTP configuration (e.g. Brevo) loaded from environment variables
 const createTransporter = async () => {
-    // Generate test SMTP service account from ethereal.email
-    let testAccount = await nodemailer.createTestAccount();
-
     const transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false, // true for 465, false for other ports
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports (like 587)
         auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
         },
     });
 
@@ -23,11 +19,11 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
     try {
         const transporter = await createTransporter();
 
-        // Ensure the NextJS frontend is running on 3000
-        const verifyUrl = `http://localhost:3000/verify-email?token=${token}`;
+        const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
 
         const info = await transporter.sendMail({
-            from: '"QR Access Security" <noreply@qraccess.local>',
+            from: process.env.SMTP_FROM || '"QR Access Security" <noreply@qraccess.local>',
             to: toEmail,
             subject: "Verify Your Email Address - QR Access",
             text: `Hello ${fullName},\n\nPlease verify your email by clicking the following link:\n${verifyUrl}\n\nIf you did not request this, please ignore this email.`,
@@ -46,7 +42,7 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
         console.log("=========================================");
         console.log("📨 EMAIL SENT FOR VERIFICATION");
         console.log(`To: ${toEmail}`);
-        console.log("Preview URL To Click: %s", nodemailer.getTestMessageUrl(info));
+        if (info.messageId) console.log("Message ID: %s", info.messageId);
         console.log("=========================================");
 
         return true;
@@ -59,10 +55,11 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
 exports.sendAgentInvitation = async (toEmail, fullName, rawPassword) => {
     try {
         const transporter = await createTransporter();
-        const loginUrl = "http://localhost:3000/login"; // Replace with real URL eventually
+        const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const loginUrl = `${baseUrl}/login`;
 
         const info = await transporter.sendMail({
-            from: '"QR Access Team" <noreply@qraccess.local>',
+            from: process.env.SMTP_FROM || '"QR Access Team" <noreply@qraccess.local>',
             to: toEmail,
             subject: "You've been invited as an Agent - QR Access",
             text: `Hello ${fullName},\n\nYou have been added as an Agent for your organization.\nYour email: ${toEmail}\nYour password: ${rawPassword}\n\nPlease login at: ${loginUrl}`,
@@ -84,7 +81,7 @@ exports.sendAgentInvitation = async (toEmail, fullName, rawPassword) => {
         console.log("=========================================");
         console.log("📨 INVITATION EMAIL SENT");
         console.log(`To: ${toEmail}`);
-        console.log("Preview message: %s", nodemailer.getTestMessageUrl(info));
+        if (info.messageId) console.log("Message ID: %s", info.messageId);
         console.log("=========================================");
 
         return true;

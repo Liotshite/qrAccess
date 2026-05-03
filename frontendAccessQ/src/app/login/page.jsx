@@ -64,7 +64,7 @@ export default function Login() {
                 {/* Logo and Tagline */}
                 <div className="relative z-10 flex flex-col items-center">
                     <img
-                        src="/logo/SI_logo-removebg-preview.png"
+                        src="/logo/access_logo.png"
                         alt="QR Access Logo"
                         className="w-64 h-auto drop-shadow-xl mb-8 transform transition-transform hover:scale-105 duration-500"
                     />

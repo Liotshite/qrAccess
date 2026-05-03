@@ -10,7 +10,7 @@ export default function Home() {
           {/* Logo Section */}
           <Link href="/" className="flex items-center gap-3 group">
             <img
-              src="/logo/SI_logo-removebg-preview.png"
+              src="/logo/access_logo.png"
               alt="QR Access Logo"
               className="w-12 h-auto drop-shadow-md group-hover:scale-105 transition-transform duration-300"
             />
@@ -81,7 +81,7 @@ export default function Home() {
               <div className="w-64 h-64 bg-yellow-200/40 rounded-full blur-[80px]"></div>
             </div>
             <img
-              src="/logo/SI_logo-removebg-preview.png"
+              src="/logo/access_logo.png"
               alt="Dashboard Placeholder"
               className="w-40 md:w-56 h-auto opacity-60 drop-shadow-xl relative z-10 transition-transform duration-700 hover:scale-105"
             />
