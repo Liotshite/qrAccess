@@ -11,7 +11,7 @@ export default function Home() {
           <Link href="/" className="flex items-center gap-3 group">
             <img
               src="/logo/access_logo.png"
-              alt="QR Access Logo"
+              alt="Logo"
               className="w-12 h-auto drop-shadow-md group-hover:scale-105 transition-transform duration-300"
             />
             <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
