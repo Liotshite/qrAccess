@@ -19,8 +19,8 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
     try {
         const transporter = await createTransporter();
 
-        const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+        const baseUrl = process.env.FRONTEND_URL;//|| "http://localhost:3000";
+        const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
 
         const info = await transporter.sendMail({
             from: process.env.SMTP_FROM || '"QR Access Security" <noreply@qraccess.local>',
@@ -55,7 +55,7 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
 exports.sendAgentInvitation = async (toEmail, fullName, rawPassword) => {
     try {
         const transporter = await createTransporter();
-        const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const baseUrl = process.env.FRONTEND_URL; //|| "http://localhost:3000";
         const loginUrl = `${baseUrl}/login`;
 
         const info = await transporter.sendMail({
