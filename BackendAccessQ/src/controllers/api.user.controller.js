@@ -71,13 +71,13 @@ exports.login = async (req, res) => {
         if (!user.is_verified) {
             return res.status(403).json({
                 success: false,
-                message: "Veuillez vérifier votre adresse email avant de vous connecter. Consultez votre boîte de réception (ou la console Ethereal)."
+                message: "Veuillez vérifier votre adresse email avant de vous connecter. Consultez votre boîte de réception."
             });
         }
 
         const token = jwt.sign(
             { user_id: user.user_id, email: user.email, role: user.role, org_id: user.org_id },
-            process.env.JWT_SECRET || "fallback_secret",
+            process.env.JWT_SECRET,
             { expiresIn: "100d" }
         );
 
