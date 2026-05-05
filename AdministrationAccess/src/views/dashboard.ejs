@@ -1,0 +1,82 @@
+<%- include('partials/header') %>
+
+<!-- Navbar -->
+<nav class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <span class="text-2xl font-bold text-primary">AccessQ Admin</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-slate-600">
+                    Connecté en tant que <span class="font-semibold text-slate-800"><%= user.email %></span>
+                </div>
+                <a href="/logout" class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Déconnexion
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-900">Tableau de bord</h1>
+        <p class="text-slate-500 mt-1">Aperçu global de l'activité sur la plateforme AccessQ.</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Card 1 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Utilisateurs Totaux</p>
+                    <p class="text-3xl font-bold text-slate-900 mt-1"><%= stats.totalUsers %></p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Organisations</p>
+                    <p class="text-3xl font-bold text-slate-900 mt-1"><%= stats.totalOrganizations %></p>
+                </div>
+                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Événements</p>
+                    <p class="text-3xl font-bold text-slate-900 mt-1"><%= stats.totalEvents %></p>
+                </div>
+                <div class="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions or Lists can go here -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Bienvenue dans l'espace d'administration</h2>
+        <p class="text-slate-600">
+            D'ici, vous pouvez gérer les organisations, superviser les utilisateurs, et monitorer l'activité globale du système.
+            D'autres fonctionnalités pourront être ajoutées selon vos besoins !
+        </p>
+    </div>
+
+</main>
+
+<%- include('partials/footer') %>
