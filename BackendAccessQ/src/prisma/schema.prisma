@@ -15,6 +15,7 @@ model UserQ {
   password_hash      String
   role               Role
   is_verified        Boolean       @default(false)
+  is_active          Boolean       @default(true)
   verification_token String?       @unique
   deleted_at         DateTime?
   created_at         DateTime      @default(now())
@@ -31,6 +32,7 @@ model Organization {
   name              String
   created_at        DateTime  @default(now())
   deleted_at        DateTime?
+  is_active         Boolean   @default(true)
   subscription_plan Int?
   areas             Area[]
   events            Event[]

@@ -4,14 +4,19 @@
 <nav class="bg-white border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
-            <div class="flex items-center">
+            <div class="flex items-center space-x-8">
                 <span class="text-2xl font-bold text-primary">AccessQ Admin</span>
+                <div class="hidden md:flex space-x-4">
+                    <a href="/dashboard" class="bg-slate-100 text-slate-900 px-3 py-2 rounded-md text-sm font-medium">Tableau de bord</a>
+                    <a href="/organizations" class="text-slate-500 hover:text-slate-900 px-3 py-2 rounded-md text-sm font-medium">Organisations</a>
+                    <a href="/users" class="text-slate-500 hover:text-slate-900 px-3 py-2 rounded-md text-sm font-medium">Utilisateurs</a>
+                </div>
             </div>
             <div class="flex items-center space-x-4">
-                <div class="text-sm text-slate-600">
-                    Connecté en tant que <span class="font-semibold text-slate-800"><%= user.email %></span>
+                <div class="text-sm text-slate-600 mr-4">
+                    <%= user.email %>
                 </div>
-                <a href="/logout" class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <a href="/logout" class="text-slate-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     Déconnexion
                 </a>
             </div>

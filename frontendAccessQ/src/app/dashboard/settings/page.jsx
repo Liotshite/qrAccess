@@ -23,6 +23,12 @@ export default function SettingsPage() {
     const [orgLoading, setOrgLoading] = useState(false);
     const [orgStatus, setOrgStatus] = useState({ type: "", message: "" });
 
+    // Delete Org state
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteInput, setDeleteInput] = useState("");
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const requiredDeleteText = "oui, je comprend les consequences de mon action et je valide la suppression";
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -144,6 +150,27 @@ export default function SettingsPage() {
             setOrgStatus({ type: "error", message: "Erreur réseau." });
         } finally {
             setOrgLoading(false);
+        }
+    };
+
+    const handleDeleteOrg = async () => {
+        setDeleteLoading(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/org`, {
+                method: "DELETE",
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Redirect to login page upon success
+                window.location.href = "/login";
+            } else {
+                alert(data.message || "Erreur lors de la suppression.");
+                setDeleteLoading(false);
+            }
+        } catch (err) {
+            alert("Erreur réseau.");
+            setDeleteLoading(false);
         }
     };
 
@@ -333,8 +360,80 @@ export default function SettingsPage() {
                         </section>
                     )}
 
+                    {/* Danger Zone */}
+                    {isAdmin && (
+                        <section className="bg-red-50 rounded-3xl border border-red-200 shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-red-200 flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                                    <AlertCircle className="w-5 h-5" />
+                                </div>
+                                <h2 className="font-bold text-red-900">Zone de Danger</h2>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <p className="text-sm text-red-800">
+                                    La suppression de votre organisation est irréversible depuis l'interface. 
+                                    Cela désactivera immédiatement tous les comptes liés, y compris le vôtre.
+                                </p>
+                                <button
+                                    onClick={() => setShowDeleteModal(true)}
+                                    className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl shadow-sm transition-all text-sm"
+                                >
+                                    Supprimer l'organisation
+                                </button>
+                            </div>
+                        </section>
+                    )}
+
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+                        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+                            <AlertCircle className="w-6 h-6 text-red-500" />
+                            <h3 className="font-bold text-lg text-slate-900">Confirmation de suppression</h3>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-slate-600">
+                                Êtes-vous absolument sûr ? Cette action va désactiver l'accès à tous les membres de <strong>{organization?.name}</strong>.
+                            </p>
+                            <div className="bg-red-50 text-red-800 p-4 rounded-xl text-sm border border-red-100">
+                                Veuillez taper exactement la phrase suivante pour confirmer :<br/>
+                                <strong className="select-all block mt-2 font-mono text-center">"{requiredDeleteText}"</strong>
+                            </div>
+                            <input
+                                type="text"
+                                value={deleteInput}
+                                onChange={(e) => setDeleteInput(e.target.value)}
+                                placeholder="Tapez la phrase ici..."
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm"
+                            />
+                        </div>
+                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setDeleteInput("");
+                                }}
+                                disabled={deleteLoading}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-200 font-medium rounded-xl transition-all text-sm"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={handleDeleteOrg}
+                                disabled={deleteInput !== requiredDeleteText || deleteLoading}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                            >
+                                {deleteLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Confirmer la suppression
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

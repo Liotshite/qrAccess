@@ -40,6 +40,7 @@ router.put("/profile", authMiddleware, userController.updateProfile);
 router.put("/password", authMiddleware, userController.updatePassword);
 router.get("/org", authMiddleware, userController.getOrganization);
 router.put("/org", authMiddleware, userController.updateOrganization);
+router.delete("/org", authMiddleware, userController.deleteOrganization);
 
 // Page log out
 router.get("/logout", authMiddleware, userController.logout);

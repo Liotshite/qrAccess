@@ -42,3 +42,21 @@ exports.getOrganizationById = async (orgId) => {
         where: { org_id: orgId }
     });
 };
+
+exports.deleteOrganization = async (orgId) => {
+    return await prisma.$transaction(async (tx) => {
+        // Soft delete the organization
+        const org = await tx.organization.update({
+            where: { org_id: orgId },
+            data: { deleted_at: new Date() }
+        });
+
+        // Soft delete all users belonging to this organization
+        await tx.userQ.updateMany({
+            where: { org_id: orgId },
+            data: { deleted_at: new Date() }
+        });
+
+        return org;
+    });
+};

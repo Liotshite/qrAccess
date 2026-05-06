@@ -331,3 +331,29 @@ exports.getOrganization = async (req, res) => {
         return res.status(500).json({ success: false, message: "Erreur serveur." });
     }
 };
+
+exports.deleteOrganization = async (req, res) => {
+    try {
+        const { org_id, role } = req.user;
+
+        // Ensure user is an ORG_ADMIN
+        if (role !== "ORG_ADMIN") {
+            return res.status(403).json({ success: false, message: "Accès refusé. Réservé à l'administrateur de l'organisation." });
+        }
+
+        if (!org_id) {
+            return res.status(400).json({ success: false, message: "Aucune organisation liée à cet utilisateur." });
+        }
+
+        // Soft delete the organization and its users
+        await userService.deleteOrganization(org_id);
+
+        // Clear the session cookie
+        res.clearCookie("token");
+
+        return res.status(200).json({ success: true, message: "Organisation supprimée avec succès." });
+    } catch (error) {
+        console.error("Erreur deleteOrganization:", error);
+        return res.status(500).json({ success: false, message: "Erreur lors de la suppression de l'organisation." });
+    }
+};
