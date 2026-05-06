@@ -4,11 +4,13 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const cors = require('cors');
-
 const helmet = require('helmet');
 
 // ===== Configurer CORS pour React =====
-const allowedOrigins = [process.env.FRONTEND_URL || 'http://localhost:3000'];
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:3000'
+].filter(Boolean);
 
 app.use(helmet({
     crossOriginResourcePolicy: false, // Permet le chargement d'images de QR codes depuis le frontend

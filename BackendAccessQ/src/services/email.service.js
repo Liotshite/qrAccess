@@ -5,7 +5,7 @@ const createTransporter = async () => {
     const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT),
-        secure: false, // process.env.SMTP_PORT === "465" true for 465, false for other ports (like 587)
+        secure: process.env.SMTP_PORT === "465",
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
@@ -19,7 +19,7 @@ exports.sendVerificationEmail = async (toEmail, fullName, token) => {
     try {
         const transporter = await createTransporter();
 
-        const baseUrl = process.env.FRONTEND_URL;//|| "http://localhost:3000";
+        const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
         const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
 
         const info = await transporter.sendMail({
