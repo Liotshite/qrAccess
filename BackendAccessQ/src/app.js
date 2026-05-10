@@ -8,8 +8,7 @@ const helmet = require('helmet');
 
 // ===== Configurer CORS pour React =====
 const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    'http://localhost:3000'
+    process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(helmet({
@@ -19,6 +18,8 @@ app.use(helmet({
 
 app.use(cors({
     origin: function (origin, callback) {
+        console.log("Origin:", origin);
+        console.log("Allowed:", allowedOrigins);
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
             var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
